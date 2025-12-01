@@ -2,8 +2,10 @@ Package: TADACommunityHub
 Title: TADA Repository for State and Tribal Criteria and Methods
 Version: 0.0.0.9000
 Authors@R: 
+c(
     person("Kenny", "Wong", , "Wong.Kenny@epa.gov", role = c("aut", "cre"))
     person("Cristina", "Mullin", , "Mullin.Cristina@epa.gov", role = c("aut"))
+)
 Description: This package will serve as a repository for holding state, tribal, 
     and territorial criteria and methods that have been filled out and reviewed
     by the appropriate subject matter expert for clean water act assessments. 
