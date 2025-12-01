@@ -10,7 +10,8 @@ validateATTAINSParam(data)
 \item{data}{a R data frame. Future dev will allow other data file types.}
 }
 \value{
-A data frame containing the loaded data.
+A list returning if all ATTAINS.ParameterName are current valid
+domain values or not. If not, identify which are not valid.
 }
 \description{
 Loads a data frame provided by the user.

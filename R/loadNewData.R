@@ -2,7 +2,8 @@
 #'
 #' Loads a data frame provided by the user.
 #' @param data a R data frame. Future dev will allow other data file types.
-#' @return A data frame containing the loaded data.
+#' @return A list returning if all ATTAINS.ParameterName are current valid
+#' domain values or not. If not, identify which are not valid.
 #' @export
 #' 
 validateATTAINSParam <- function(data) {
@@ -45,9 +46,9 @@ validateATTAINSParam <- function(data) {
   # Placeholder for demonstration
   # validation_passed <- sample(c(TRUE, FALSE), 1) # Simulate validation
   if (result2$status == "Accepted") {
-    result2 <- list(status = "Accepted", message = "ATTAINS.ParamerterName(s) passed all validation checks.")
+    result2 <- list(status = "Accepted", message = "ATTAINS.ParameterName(s) passed all validation checks.")
   } else {
-    result2 <- list(status = "Rejected", message = "ATTAINS.ParamerteName(s) failed some validation checks. Please review the issues.")
+    result2 <- list(status = "Rejected", message = "ATTAINS.ParametetName(s) failed some validation checks. Please review the issues.")
   }
   
   # val <- validate::violating(submitted_data, out2)
