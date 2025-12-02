@@ -16,3 +16,8 @@ domain values or not. If not, identify which are not valid.
 \description{
 Loads a data frame provided by the user.
 }
+\examples{
+data("UTAHDWQ")
+review <- validateAll(folder_path = "inst/extdata/", validateColumn = validateWQXChar)
+
+}
