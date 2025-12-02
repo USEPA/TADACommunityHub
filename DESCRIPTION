@@ -23,6 +23,7 @@ Depends:
     R (>= 3.5)
     validate
     purrr
+    spsUtil
 LazyData: true
 Suggests: 
     testthat (>= 3.0.0)

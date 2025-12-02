@@ -18,7 +18,7 @@ validateATTAINSParam <- function(data) {
   }
   
   rules_values <- validate::validator(
-    toupper(ATTAINS.ParameterName) %in% toupper(rExpertQuery::EQ_DomainValues("param_name")[,"code"])
+    toupper(ATTAINS.ParameterName) %in% toupper(spsUtil::quiet(rExpertQuery::EQ_DomainValues("param_name")[,"code"]))
   )
   
   # Confront data with rules
@@ -31,7 +31,6 @@ validateATTAINSParam <- function(data) {
   if (all( validate::values(out2))) { # Example: All rules passed
     result2 <- list(status = "Accepted", report = report2)
   } else {
-    #result <- list(status = "Rejected", report = report)
     result2 <- list(status = "Rejected", report = report2)
   }
   
@@ -39,10 +38,10 @@ validateATTAINSParam <- function(data) {
   if (result2$status == "Accepted") {
     result2 <- list(status = "Accepted", message = "ATTAINS.ParameterName(s) passed all validation checks.")
   } else {
-    result2 <- list(status = "Rejected", message = "ATTAINS.ParametetName(s) failed some validation checks. Please review the issues.")
+    result2 <- list(status = "Rejected", message = "ATTAINS.ParameterName(s) failed some validation checks. Please review the issues.")
   }
   
-  result2$issues <- unique(as.character(validate::violating(submitted_data, out2)[,"ATTAINS.ParameterName"]))
+  result2$issues <- unique(validate::violating(submitted_data, out2)[,"ATTAINS.ParameterName"])
   result2$nrows_fails <- report2$fails
   result2$nrows_passes <- report2$passes
     
@@ -96,7 +95,7 @@ validateWQXChar <- function(data) {
   }
   
   # add values to list
-  result2$issues <- unique(as.character(validate::violating(submitted_data, out2)[,"ATTAINS.ParameterName"]))
+  result2$issues <- unique(validate::violating(submitted_data, out2)[,"ATTAINS.ParameterName"])
   result2$nrows_fails <- report2$fails
   result2$nrows_passes <- report2$passes
   
