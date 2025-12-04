@@ -253,7 +253,7 @@ validateAll <- function(folder_path = NULL, validateColumn){
   file_list <- list.files(path = folder_path, pattern = "\\.xlsx$", full.names = TRUE)
   
   val_checks <- map(file_list, ~ {
-    data <- read_excel(.x)
+    data <- readxl::read_excel(.x)
     do.call(validateColumn, list(data))
   })
   
