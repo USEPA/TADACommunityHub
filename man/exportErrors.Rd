@@ -2,13 +2,16 @@
 % Please edit documentation in R/loadNewData.R
 \name{exportErrors}
 \alias{exportErrors}
-\title{Export data with errors}
+\title{Export data with errors from validateAll}
 \usage{
 exportErrors(data, folder_path = NULL)
 }
 \arguments{
-\item{data}{a single or a list of multiple data frame that is an output from
-a TADACommunityHub R validate function.}
+\item{data}{a list of list of multiple data frame that is an output from
+the TADACommunityHub R validateAll function.}
+
+\item{folder_path}{The default is "inst/extdata/" to review user submitted criteria
+table to the TADACommunityHub repository for review.}
 }
 \value{
 An excel spreadsheet that shows the invalid column values from the

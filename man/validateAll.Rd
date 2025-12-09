@@ -7,17 +7,24 @@
 validateAll(folder_path = NULL, validateColumn)
 }
 \arguments{
-\item{data}{a R data frame. Future dev will allow other data file types.}
+\item{folder_path}{The default is "inst/extdata/" to review user submitted criteria
+table to the TADACommunityHub repository for review.}
+
+\item{validateColumn}{an R TADACommunityHub validate function. See \code{validateWQXChar()},
+\code{validateATTAINSParam}, \code{validateATTAINSUse} and \code{validateATTAINSOrg}.}
+
+\item{data}{an R data frame. Future dev will allow other data file types.}
 }
 \value{
 A list of list of what column name contains the current valid
 domain values or not. If not, identify which are not valid.
 }
 \description{
-Loads a data frame provided by the user.
+For each criteria tables submitted to a folder path (defaults to those submitted
+to the inst/extdata folder path of this TADACommunityHub repository) this will
+validate all criteria table for a single column.
 }
 \examples{
-data("UTAHDWQ")
 review <- validateAll(folder_path = "inst/extdata/", validateColumn = validateWQXChar)
 
 }

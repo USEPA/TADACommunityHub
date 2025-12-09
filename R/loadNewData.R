@@ -229,14 +229,23 @@ validateATTAINSOrg <- function(data) {
 
 #' Validate all data .xlsx in a Folder Path
 #'
-#' Loads a data frame provided by the user.
-#' @param data a R data frame. Future dev will allow other data file types.
+#' For each criteria tables submitted to a folder path (defaults to those submitted
+#' to the inst/extdata folder path of this TADACommunityHub repository) this will
+#' validate all criteria table for a single column.
+#' 
+#' @param data an R data frame. Future dev will allow other data file types.
+#' 
+#' @param folder_path The default is "inst/extdata/" to review user submitted criteria
+#' table to the TADACommunityHub repository for review.
+#' 
+#' @param validateColumn an R TADACommunityHub validate function. See `validateWQXChar()`,
+#' `validateATTAINSParam`, `validateATTAINSUse` and `validateATTAINSOrg`.
+#' 
 #' @return A list of list of what column name contains the current valid
 #' domain values or not. If not, identify which are not valid.
 #' @export
 #' 
 #' @examples
-#' data("UTAHDWQ")
 #' review <- validateAll(folder_path = "inst/extdata/", validateColumn = validateWQXChar)
 #' 
 validateAll <- function(folder_path = NULL, validateColumn){
@@ -267,15 +276,19 @@ validateAll <- function(folder_path = NULL, validateColumn){
 
 
 
-#' Export data with errors
+#' Export data with errors from validateAll
 #'
 #' Loads the list of unique errors in a column and exports it to df
-#' @param data a single or a list of multiple data frame that is an output from
-#' a TADACommunityHub R validate function.
+#' @param data a list of list of multiple data frame that is an output from
+#' the TADACommunityHub R validateAll function.
+#' 
+#' @param folder_path The default is "inst/extdata/" to review user submitted criteria
+#' table to the TADACommunityHub repository for review.
 #' 
 #' @return An excel spreadsheet that shows the invalid column values from the 
 #' user supplied criteria table(s). Users can choose from a drop down list of 
 #' allowable valid values for that column name.
+#' 
 #' @export
 #' 
 #' @examples
