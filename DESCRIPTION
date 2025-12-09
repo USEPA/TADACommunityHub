@@ -25,7 +25,10 @@ Depends:
     purrr,
     spsUtil, 
     readxl,
-    openxlsx
+    openxlsx,
+    utils
+Remotes:
+    USEPA/rExpertQuery@develop
 LazyData: true
 Suggests: 
     testthat (>= 3.0.0)

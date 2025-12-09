@@ -14,7 +14,7 @@ validateATTAINSParam <- function(data) {
   # Load or read data if a file path is provided
   if (is.character(data)) {
     # Example: Read CSV
-    submitted_data <- read.csv(data)
+    submitted_data <- utils::read.csv(data)
   } else if (is.data.frame(data)) {
     submitted_data <- data
   } else {
@@ -26,30 +26,30 @@ validateATTAINSParam <- function(data) {
   )
   
   # Confront data with rules
-  out2 <- validate::confront(submitted_data, rules_values)
+  out <- validate::confront(submitted_data, rules_values)
   
   # Generate validation report
-  report2 <- validate::summary(out2)
+  report <- validate::summary(out)
   
   # Determine acceptance/rejection
-  if (all( validate::values(out2))) { # Example: All rules passed
-    result2 <- list(status = "Accepted", report = report2)
+  if (all( validate::values(out))) { # Example: All rules passed
+    result <- list(status = "Accepted", report = report)
   } else {
-    result2 <- list(status = "Rejected", report = report2)
+    result <- list(status = "Rejected", report = report)
   }
   
   # display message if accepted vs rejected
-  if (result2$status == "Accepted") {
-    result2 <- list(status = "Accepted", message = "ATTAINS.ParameterName(s) passed all validation checks.")
+  if (result$status == "Accepted") {
+    result <- list(status = "Accepted", message = "ATTAINS.ParameterName(s) passed all validation checks.")
   } else {
-    result2 <- list(status = "Rejected", message = "ATTAINS.ParameterName(s) failed some validation checks. Please review the issues.")
+    result <- list(status = "Rejected", message = "ATTAINS.ParameterName(s) failed some validation checks. Please review the issues.")
   }
   
-  result2$issues <- unique(validate::violating(submitted_data, out2)[,"ATTAINS.ParameterName"])
-  result2$nrows_fails <- report2$fails
-  result2$nrows_passes <- report2$passes
+  result$issues <- unique(validate::violating(submitted_data, out)[,"ATTAINS.ParameterName"])
+  result$nrows_fails <- report$fails
+  result$nrows_passes <- report$passes
     
-  return(result2)
+  return(result)
 }
 
 
@@ -70,7 +70,7 @@ validateWQXChar <- function(data) {
   # Load or read data if a file path is provided
   if (is.character(data)) {
     # Example: Read CSV
-    submitted_data <- read.csv(data)
+    submitted_data <- utils::read.csv(data)
   } else if (is.data.frame(data)) {
     submitted_data <- data
   } else {
@@ -82,32 +82,32 @@ validateWQXChar <- function(data) {
   )
   
   # Confront data with rules
-  out2 <- validate::confront(submitted_data, rules_values)
+  out <- validate::confront(submitted_data, rules_values)
   
   # Generate validation report
-  report2 <- validate::summary(out2)
+  report <- validate::summary(out)
   
   # Determine acceptance/rejection
-  if (all( validate::values(out2))) { # Example: All rules passed
-    result2 <- list(status = "Accepted", report = report2)
+  if (all( validate::values(out))) { # Example: All rules passed
+    result <- list(status = "Accepted", report = report)
   } else {
 
-    result2 <- list(status = "Rejected", report = report2)
+    result <- list(status = "Rejected", report = report)
   }
   
   # display message if accepted vs rejected
-  if (result2$status == "Accepted") {
-    result2 <- list(status = "Accepted", message = "WQX.CharacteristicName(s) passed all validation checks.")
+  if (result$status == "Accepted") {
+    result <- list(status = "Accepted", message = "WQX.CharacteristicName(s) passed all validation checks.")
   } else {
-    result2 <- list(status = "Rejected", message = "WQX.CharacteristicName(s) failed some validation checks. Please review the issues.")
+    result <- list(status = "Rejected", message = "WQX.CharacteristicName(s) failed some validation checks. Please review the issues.")
   }
   
   # add values to list
-  result2$issues <- unique(validate::violating(submitted_data, out2)[,"TADA.CharacteristicName"])
-  result2$nrows_fails <- report2$fails
-  result2$nrows_passes <- report2$passes
+  result$issues <- unique(validate::violating(submitted_data, out)[,"TADA.CharacteristicName"])
+  result$nrows_fails <- report$fails
+  result$nrows_passes <- report$passes
   
-  return(result2)
+  return(result)
 }
 
 
@@ -128,7 +128,7 @@ validateATTAINSUse <- function(data) {
   # Load or read data if a file path is provided
   if (is.character(data)) {
     # Example: Read CSV
-    submitted_data <- read.csv(data)
+    submitted_data <- utils::read.csv(data)
   } else if (is.data.frame(data)) {
     submitted_data <- data
   } else {
@@ -140,32 +140,32 @@ validateATTAINSUse <- function(data) {
   )
   
   # Confront data with rules
-  out2 <- validate::confront(submitted_data, rules_values)
+  out <- validate::confront(submitted_data, rules_values)
   
   # Generate validation report
-  report2 <- validate::summary(out2)
+  report <- validate::summary(out)
   
   # Determine acceptance/rejection
-  if (all( validate::values(out2))) { # Example: All rules passed
-    result2 <- list(status = "Accepted", report = report2)
+  if (all( validate::values(out))) { # Example: All rules passed
+    result <- list(status = "Accepted", report = report)
   } else {
     
-    result2 <- list(status = "Rejected", report = report2)
+    result <- list(status = "Rejected", report = report)
   }
   
   # display message if accepted vs rejected
-  if (result2$status == "Accepted") {
-    result2 <- list(status = "Accepted", message = "ATTAINS.UseName(s) passed all validation checks.")
+  if (result$status == "Accepted") {
+    result <- list(status = "Accepted", message = "ATTAINS.UseName(s) passed all validation checks.")
   } else {
-    result2 <- list(status = "Rejected", message = "ATTAINS.UseName(s) failed some validation checks. Please review the issues.")
+    result <- list(status = "Rejected", message = "ATTAINS.UseName(s) failed some validation checks. Please review the issues.")
   }
   
   # add values to list
-  result2$issues <- unique(validate::violating(submitted_data, out2)[,"ATTAINS.UseName"])
-  result2$nrows_fails <- report2$fails
-  result2$nrows_passes <- report2$passes
+  result$issues <- unique(validate::violating(submitted_data, out)[,"ATTAINS.UseName"])
+  result$nrows_fails <- report$fails
+  result$nrows_passes <- report$passes
   
-  return(result2)
+  return(result)
 }
 
 
@@ -186,7 +186,7 @@ validateATTAINSOrg <- function(data) {
   # Load or read data if a file path is provided
   if (is.character(data)) {
     # Example: Read CSV
-    submitted_data <- read.csv(data)
+    submitted_data <- utils::read.csv(data)
   } else if (is.data.frame(data)) {
     submitted_data <- data
   } else {
@@ -198,32 +198,32 @@ validateATTAINSOrg <- function(data) {
   )
   
   # Confront data with rules
-  out2 <- validate::confront(submitted_data, rules_values)
+  out <- validate::confront(submitted_data, rules_values)
   
   # Generate validation report
-  report2 <- validate::summary(out2)
+  report <- validate::summary(out)
   
   # Determine acceptance/rejection
-  if (all( validate::values(out2))) { # Example: All rules passed
-    result2 <- list(status = "Accepted", report = report2)
+  if (all( validate::values(out))) { # Example: All rules passed
+    result <- list(status = "Accepted", report = report)
   } else {
     
-    result2 <- list(status = "Rejected", report = report2)
+    result <- list(status = "Rejected", report = report)
   }
   
   # display message if accepted vs rejected
-  if (result2$status == "Accepted") {
-    result2 <- list(status = "Accepted", message = "ATTAINS.OrganizationIdentifier(s) passed all validation checks.")
+  if (result$status == "Accepted") {
+    result <- list(status = "Accepted", message = "ATTAINS.OrganizationIdentifier(s) passed all validation checks.")
   } else {
-    result2 <- list(status = "Rejected", message = "ATTAINS.OrganizationIdentifier(s) failed some validation checks. Please review the issues.")
+    result <- list(status = "Rejected", message = "ATTAINS.OrganizationIdentifier(s) failed some validation checks. Please review the issues.")
   }
   
   # add values to list
-  result2$issues <- unique(validate::violating(submitted_data, out2)[,"ATTAINS.OrganizationIdentifier"])
-  result2$nrows_fails <- report2$fails
-  result2$nrows_passes <- report2$passes
+  result$issues <- unique(validate::violating(submitted_data, out)[,"ATTAINS.OrganizationIdentifier"])
+  result$nrows_fails <- report$fails
+  result$nrows_passes <- report$passes
   
-  return(result2)
+  return(result)
 }
 
 
@@ -232,8 +232,6 @@ validateATTAINSOrg <- function(data) {
 #' For each criteria tables submitted to a folder path (defaults to those submitted
 #' to the inst/extdata folder path of this TADACommunityHub repository) this will
 #' validate all criteria table for a single column.
-#' 
-#' @param data an R data frame. Future dev will allow other data file types.
 #' 
 #' @param folder_path The default is "inst/extdata/" to review user submitted criteria
 #' table to the TADACommunityHub repository for review.
@@ -246,13 +244,13 @@ validateATTAINSOrg <- function(data) {
 #' @export
 #' 
 #' @examples
-#' review <- validateAll(folder_path = "inst/extdata/", validateColumn = validateWQXChar)
+#' review <- validateAll(validateColumn = validateWQXChar)
 #' 
 validateAll <- function(folder_path = NULL, validateColumn){
   
   if ( is.null(folder_path)){
     print("No folder path specified, searching through all files currently found in inst/extdata/")
-    folder_path <- "inst/extdata/"
+    folder_path <- system.file("extdata", package = "TADACommunityHub")
   }
   
   if ( is.null(validateColumn)){
@@ -268,7 +266,7 @@ validateAll <- function(folder_path = NULL, validateColumn){
   
   safe_my_function <- purrr::possibly(my_function, otherwise = NULL)
   
-  val_checks <- map(file_list, safe_my_function)
+  val_checks <- purrr::map(file_list, safe_my_function)
   
   names(val_checks) <- gsub("inst/extdata/", "", file_list)
   return(val_checks)
@@ -285,6 +283,10 @@ validateAll <- function(folder_path = NULL, validateColumn){
 #' @param folder_path The default is "inst/extdata/" to review user submitted criteria
 #' table to the TADACommunityHub repository for review.
 #' 
+#' @param excel A boolean value. If TRUE, this will generate an excel spreadheet
+#' of all criteria tables in your defined folder to indicate what values not
+#' a valid entry in TADA format.
+#' 
 #' @return An excel spreadsheet that shows the invalid column values from the 
 #' user supplied criteria table(s). Users can choose from a drop down list of 
 #' allowable valid values for that column name.
@@ -292,17 +294,17 @@ validateAll <- function(folder_path = NULL, validateColumn){
 #' @export
 #' 
 #' @examples
-#' review2 <- validateAll(folder_path = "inst/extdata/", validateColumn = validateATTAINS.UseName)
+#' review2 <- validateAll(validateColumn = validateATTAINSUse)
 #' err <- exportErrors(review2)
 #' 
-exportErrors <- function(data, folder_path = NULL) {
+exportErrors <- function(data, folder_path = NULL, excel = FALSE) {
   # Create an empty list to store the dataframes
   list_of_dataframes <- list()
   
   # Consider flexibility in folder path in future.
   if ( is.null(folder_path) ){
       print("No folder path specified, searching through all files currently found in inst/extdata/")
-      folder_path <- "inst/extdata/"
+      folder_path <- system.file("extdata", package = "TADACommunityHub")
   }
   file_list <- list.files(path = folder_path, pattern = "\\.xlsx$", full.names = TRUE)
   
@@ -312,7 +314,7 @@ exportErrors <- function(data, folder_path = NULL) {
     file_name <- tools::file_path_sans_ext(basename(file_path))
     
     # Read the Excel file into a dataframe
-    df <- read_excel(file_path)
+    df <- readxl::read_excel(file_path)
     
     # Add the dataframe to the list, using the file name as the element name
     list_of_dataframes[[file_name]] <- df
@@ -334,107 +336,102 @@ exportErrors <- function(data, folder_path = NULL) {
   
   # Subset each data frame
   result_list <- errors
-  # purrr::map2(list_of_dataframes, errors, ~ {
-  #   if (length(.y[,errors_col]) == 0) {
-  #     .x # Return original dataframe if filter list is empty
-  #   } else {
-  #     .x[.x[, errors_col] %in% .y[, errors_col], ]
-  #   }
-  # }
-  #)
 
-  # 1) openxlsx tab max length is 31 char
-  names(result_list) <- substr(names(result_list), 1, 20)
-  
-  downloads_path <- file.path(Sys.getenv("USERPROFILE"), "Downloads")
-  
-  file_name <- "my_exported_data.xlsx"
-  
-  full_path <- file.path(downloads_path, file_name)
-  
-  openxlsx::write.xlsx(result_list, file = full_path)
-  
-  # 2. Open the target workbook
-  wb <- openxlsx::loadWorkbook(full_path)
-  
-  # 3. Get the names of all sheets in the workbook
-  sheet_names <- names(wb)
-  
-  # 4. Get ATTAINS Parameter domain
-  if ( errors_col == "ATTAINS.ParameterName") {
-    list_values <- as.character(rExpertQuery::EQ_DomainValues(domain = "param_name")[,"code"])
-    openxlsx::addWorksheet(wb, "Index", visible = TRUE)
-    openxlsx::writeData(
-      wb,
-      "Index",
-      startCol = 1,
-      x = list_values
-    )
-  }
-  
-  if ( errors_col == "ATTAINS.UseName") {
-    list_values <- as.character(rExpertQuery::EQ_DomainValues(domain = "use_name")[,"code"])
-    openxlsx::addWorksheet(wb, "Index", visible = TRUE)
-    openxlsx::writeData(
-      wb,
-      "Index",
-      startCol = 1,
-      x = list_values
-    )
-  }
-  
-  n_sheets <- length(wb$worksheets) -1
-  #m <- ifelse(nrow(result_list[[i]]) == 0, 1, nrow(result_list[[i]]) + 1)
-  
-  for (i in 1:n_sheets) {
-    if (errors_col == "ATTAINS.ParameterName") {
+  if (excel == TRUE) {
+    # 1) openxlsx tab max length is 31 char
+    n <- nchar(folder_path) - 11
+    names(result_list) <- substr(names(err), 35, nchar(names(err)))
+    names(result_list) <- substr(names(result_list), 1, 30)
+    
+    downloads_path <- file.path(Sys.getenv("USERPROFILE"), "Downloads")
+    
+    file_name <- "my_exported_data.xlsx"
+    
+    full_path <- file.path(downloads_path, file_name)
+    
+    openxlsx::write.xlsx(result_list, file = full_path)
+    
+    # 2. Open the target workbook
+    wb <- openxlsx::loadWorkbook(full_path)
+    
+    # 3. Get the names of all sheets in the workbook
+    sheet_names <- names(wb)
+    
+    # 4. Get ATTAINS Parameter domain
+    if ( errors_col == "ATTAINS.ParameterName") {
+      list_values <- as.character(rExpertQuery::EQ_DomainValues(domain = "param_name")[,"code"])
+      openxlsx::addWorksheet(wb, "Index", visible = TRUE)
       openxlsx::writeData(
         wb,
-        sheet = sheet_names[i],
-        startCol = 2,
-        x = "Suggested.ATTAINS.ParameterName"
-      )
-    }
-    if (errors_col == "ATTAINS.UseName") {
-      openxlsx::writeData(
-        wb,
-        sheet = sheet_names[i],
-        startCol = 2,
-        x = "Suggested.ATTAINS.UseName"
+        "Index",
+        startCol = 1,
+        x = list_values
       )
     }
     
-    # openxlsx::conditionalFormatting(
-    #   wb,
-    #   sheet = sheet_names[i],
-    #   cols = 2,
-    #   rows = 1:50,
-    #   type = "blanks",
-    #   style = openxlsx::createStyle(bgFill = "red")
-    # )
+    if ( errors_col == "ATTAINS.UseName") {
+      list_values <- as.character(rExpertQuery::EQ_DomainValues(domain = "use_name")[,"code"])
+      openxlsx::addWorksheet(wb, "Index", visible = TRUE)
+      openxlsx::writeData(
+        wb,
+        "Index",
+        startCol = 1,
+        x = list_values
+      )
+    }
     
-    openxlsx::conditionalFormatting(
-      wb,
-      sheet = sheet_names[i],
-      cols = 2,
-      rows = 1:50,
-      type = "notBlanks",
-      style = openxlsx::createStyle(bgFill = "green")
-    )
+    n_sheets <- length(wb$worksheets) -1
+    #m <- ifelse(nrow(result_list[[i]]) == 0, 1, nrow(result_list[[i]]) + 1)
     
-    # Apply data validation to the second column (col = 2) for a range of rows
-    # For example, rows 2 to 100
-    openxlsx::dataValidation(
-      wb,
-      sheet = sheet_names[i],
-      cols = 2,
-      rows = 2:1000, # Adjust the row range as needed
-      type = "list",
-      value = sprintf("'Index'!$A$2:$A$1100")
-    )
+    for (i in 1:n_sheets) {
+      if (errors_col == "ATTAINS.ParameterName") {
+        openxlsx::writeData(
+          wb,
+          sheet = sheet_names[i],
+          startCol = 2,
+          x = "Suggested.ATTAINS.ParameterName"
+        )
+      }
+      if (errors_col == "ATTAINS.UseName") {
+        openxlsx::writeData(
+          wb,
+          sheet = sheet_names[i],
+          startCol = 2,
+          x = "Suggested.ATTAINS.UseName"
+        )
+      }
+      
+      # openxlsx::conditionalFormatting(
+      #   wb,
+      #   sheet = sheet_names[i],
+      #   cols = 2,
+      #   rows = 1:50,
+      #   type = "blanks",
+      #   style = openxlsx::createStyle(bgFill = "red")
+      # )
+      
+      openxlsx::conditionalFormatting(
+        wb,
+        sheet = sheet_names[i],
+        cols = 2,
+        rows = 1:50,
+        type = "notBlanks",
+        style = openxlsx::createStyle(bgFill = "green")
+      )
+      
+      # Apply data validation to the second column (col = 2) for a range of rows
+      # For example, rows 2 to 100
+      openxlsx::dataValidation(
+        wb,
+        sheet = sheet_names[i],
+        cols = 2,
+        rows = 2:1000, # Adjust the row range as needed
+        type = "list",
+        value = sprintf("'Index'!$A$2:$A$1100")
+      )
+    }
+    
+    openxlsx::saveWorkbook(wb, full_path, overwrite = TRUE)
   }
-  
-  openxlsx::saveWorkbook(wb, full_path, overwrite = TRUE)
-  
   return(result_list)
 }

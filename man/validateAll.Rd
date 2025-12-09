@@ -12,8 +12,6 @@ table to the TADACommunityHub repository for review.}
 
 \item{validateColumn}{an R TADACommunityHub validate function. See \code{validateWQXChar()},
 \code{validateATTAINSParam}, \code{validateATTAINSUse} and \code{validateATTAINSOrg}.}
-
-\item{data}{an R data frame. Future dev will allow other data file types.}
 }
 \value{
 A list of list of what column name contains the current valid
@@ -25,6 +23,6 @@ to the inst/extdata folder path of this TADACommunityHub repository) this will
 validate all criteria table for a single column.
 }
 \examples{
-review <- validateAll(folder_path = "inst/extdata/", validateColumn = validateWQXChar)
+review <- validateAll(validateColumn = validateWQXChar)
 
 }

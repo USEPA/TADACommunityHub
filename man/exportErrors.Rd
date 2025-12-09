@@ -4,7 +4,7 @@
 \alias{exportErrors}
 \title{Export data with errors from validateAll}
 \usage{
-exportErrors(data, folder_path = NULL)
+exportErrors(data, folder_path = NULL, excel = FALSE)
 }
 \arguments{
 \item{data}{a list of list of multiple data frame that is an output from
@@ -12,6 +12,10 @@ the TADACommunityHub R validateAll function.}
 
 \item{folder_path}{The default is "inst/extdata/" to review user submitted criteria
 table to the TADACommunityHub repository for review.}
+
+\item{excel}{A boolean value. If TRUE, this will generate an excel spreadheet
+of all criteria tables in your defined folder to indicate what values not
+a valid entry in TADA format.}
 }
 \value{
 An excel spreadsheet that shows the invalid column values from the
@@ -22,7 +26,7 @@ allowable valid values for that column name.
 Loads the list of unique errors in a column and exports it to df
 }
 \examples{
-review2 <- validateAll(folder_path = "inst/extdata/", validateColumn = validateATTAINS.UseName)
+review2 <- validateAll(validateColumn = validateATTAINSUse)
 err <- exportErrors(review2)
 
 }
