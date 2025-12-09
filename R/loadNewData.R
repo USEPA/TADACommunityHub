@@ -252,10 +252,14 @@ validateAll <- function(folder_path = NULL, validateColumn){
   
   file_list <- list.files(path = folder_path, pattern = "\\.xlsx$", full.names = TRUE)
   
-  val_checks <- map(file_list, ~ {
-    data <- readxl::read_excel(.x)
+  my_function <- function(x) {
+    data <- readxl::read_excel(x)
     do.call(validateColumn, list(data))
-  })
+  }
+  
+  safe_my_function <- purrr::possibly(my_function, otherwise = NULL)
+  
+  val_checks <- map(file_list, safe_my_function)
   
   names(val_checks) <- gsub("inst/extdata/", "", file_list)
   return(val_checks)
@@ -266,26 +270,28 @@ validateAll <- function(folder_path = NULL, validateColumn){
 #' Export data with errors
 #'
 #' Loads the list of unique errors in a column and exports it to df
-#' @param data a R data frame. Future dev will allow other data file types.
-#' @return A list of list of what column name contains the current valid
-#' domain values or not. If not, identify which are not valid.
+#' @param data a single or a list of multiple data frame that is an output from
+#' a TADACommunityHub R validate function.
+#' 
+#' @return An excel spreadsheet that shows the invalid column values from the 
+#' user supplied criteria table(s). Users can choose from a drop down list of 
+#' allowable valid values for that column name.
 #' @export
 #' 
 #' @examples
-#' data("UTAHDWQ")
-#' review <- validateAll(folder_path = "inst/extdata/", validateColumn = validateWQXChar)
+#' review2 <- validateAll(folder_path = "inst/extdata/", validateColumn = validateATTAINS.UseName)
+#' err <- exportErrors(review2)
 #' 
-exportErrors <- function(data, df_return = TRUE){
-  
-  if ( is.null(folder_path)){
-    print("No folder path specified, searching through all files currently found in inst/extdata/")
-    folder_path <- "inst/extdata/"
-  }
-  
-  file_list <- list.files(path = folder_path, pattern = "\\.xlsx$", full.names = TRUE)
-  
+exportErrors <- function(data, folder_path = NULL) {
   # Create an empty list to store the dataframes
   list_of_dataframes <- list()
+  
+  # Consider flexibility in folder path in future.
+  if ( is.null(folder_path) ){
+      print("No folder path specified, searching through all files currently found in inst/extdata/")
+      folder_path <- "inst/extdata/"
+  }
+  file_list <- list.files(path = folder_path, pattern = "\\.xlsx$", full.names = TRUE)
   
   # Loop through each XLSX file and read it into a dataframe, then add to the list
   for (file_path in file_list) {
@@ -298,25 +304,31 @@ exportErrors <- function(data, df_return = TRUE){
     # Add the dataframe to the list, using the file name as the element name
     list_of_dataframes[[file_name]] <- df
   }
-  
-  # View the result
-  print(list_of_dataframes)
-  
+
   errors <- purrr::map(data, ~.x$issues)
   
   errors_col <- names(errors[[1]])
   
   # Filter list of df by errors_col
-  list_of_dataframes <- purrr::map(list_of_dataframes, ~unique(.x[,errors_col]))
+  list_of_dataframes <- purrr::map(list_of_dataframes, ~{ 
+    if(errors_col %in% colnames(.x)) {
+      unique(.x[,errors_col]) } 
+      else {
+        .x[,errors_col] <- NA
+      }
+      #return(.x)
+  })
   
   # Subset each data frame
-  result_list <- map2(list_of_dataframes, errors, ~ {
-    if (length(.y$ATTAINS.ParameterName) == 0) {
-      .x # Return original dataframe if filter list is empty
-    } else {
-      .x[.x$ATTAINS.ParameterName %in% .y$ATTAINS.ParameterName, ]
-    }
-  })
+  result_list <- errors
+  # purrr::map2(list_of_dataframes, errors, ~ {
+  #   if (length(.y[,errors_col]) == 0) {
+  #     .x # Return original dataframe if filter list is empty
+  #   } else {
+  #     .x[.x[, errors_col] %in% .y[, errors_col], ]
+  #   }
+  # }
+  #)
 
   # 1) openxlsx tab max length is 31 char
   names(result_list) <- substr(names(result_list), 1, 20)
@@ -336,39 +348,63 @@ exportErrors <- function(data, df_return = TRUE){
   sheet_names <- names(wb)
   
   # 4. Get ATTAINS Parameter domain
-  list_values <- as.character(rExpertQuery::EQ_DomainValues(domain = "param_name")[,"code"])
-  openxlsx::addWorksheet(wb, "Index", visible = TRUE)
-  openxlsx::writeData(
-    wb,
-    "Index",
-    startCol = 1,
-    x = list_values
-  )
-  
-  n_sheets <- length(wb$worksheets) -1
-  
-  for (i in 1:n_sheets) {
+  if ( errors_col == "ATTAINS.ParameterName") {
+    list_values <- as.character(rExpertQuery::EQ_DomainValues(domain = "param_name")[,"code"])
+    openxlsx::addWorksheet(wb, "Index", visible = TRUE)
     openxlsx::writeData(
       wb,
-      sheet = sheet_names[i],
-      startCol = 2,
-      x = "Suggested.ATTAINS.ParameterName"
+      "Index",
+      startCol = 1,
+      x = list_values
     )
+  }
+  
+  if ( errors_col == "ATTAINS.UseName") {
+    list_values <- as.character(rExpertQuery::EQ_DomainValues(domain = "use_name")[,"code"])
+    openxlsx::addWorksheet(wb, "Index", visible = TRUE)
+    openxlsx::writeData(
+      wb,
+      "Index",
+      startCol = 1,
+      x = list_values
+    )
+  }
+  
+  n_sheets <- length(wb$worksheets) -1
+  #m <- ifelse(nrow(result_list[[i]]) == 0, 1, nrow(result_list[[i]]) + 1)
+  
+  for (i in 1:n_sheets) {
+    if (errors_col == "ATTAINS.ParameterName") {
+      openxlsx::writeData(
+        wb,
+        sheet = sheet_names[i],
+        startCol = 2,
+        x = "Suggested.ATTAINS.ParameterName"
+      )
+    }
+    if (errors_col == "ATTAINS.UseName") {
+      openxlsx::writeData(
+        wb,
+        sheet = sheet_names[i],
+        startCol = 2,
+        x = "Suggested.ATTAINS.UseName"
+      )
+    }
+    
+    # openxlsx::conditionalFormatting(
+    #   wb,
+    #   sheet = sheet_names[i],
+    #   cols = 2,
+    #   rows = 1:50,
+    #   type = "blanks",
+    #   style = openxlsx::createStyle(bgFill = "red")
+    # )
     
     openxlsx::conditionalFormatting(
       wb,
       sheet = sheet_names[i],
       cols = 2,
-      rows = 1:nrow(result_list[[i]]) + 1,
-      type = "blanks",
-      style = openxlsx::createStyle(bgFill = "red")
-    )
-    
-    openxlsx::conditionalFormatting(
-      wb,
-      sheet = sheet_names[i],
-      cols = 2,
-      rows = 1:nrow(result_list[[i]]) + 1,
+      rows = 1:50,
       type = "notBlanks",
       style = openxlsx::createStyle(bgFill = "green")
     )

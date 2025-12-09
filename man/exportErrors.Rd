@@ -4,20 +4,22 @@
 \alias{exportErrors}
 \title{Export data with errors}
 \usage{
-exportErrors(data, df_return = TRUE)
+exportErrors(data, folder_path = NULL)
 }
 \arguments{
-\item{data}{a R data frame. Future dev will allow other data file types.}
+\item{data}{a single or a list of multiple data frame that is an output from
+a TADACommunityHub R validate function.}
 }
 \value{
-A list of list of what column name contains the current valid
-domain values or not. If not, identify which are not valid.
+An excel spreadsheet that shows the invalid column values from the
+user supplied criteria table(s). Users can choose from a drop down list of
+allowable valid values for that column name.
 }
 \description{
 Loads the list of unique errors in a column and exports it to df
 }
 \examples{
-data("UTAHDWQ")
-review <- validateAll(folder_path = "inst/extdata/", validateColumn = validateWQXChar)
+review2 <- validateAll(folder_path = "inst/extdata/", validateColumn = validateATTAINS.UseName)
+err <- exportErrors(review2)
 
 }
