@@ -26,7 +26,8 @@ Depends:
     spsUtil, 
     readxl,
     openxlsx,
-    utils
+    utils,
+    tools
 Remotes:
     USEPA/rExpertQuery@develop
 LazyData: true
