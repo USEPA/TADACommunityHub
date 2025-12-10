@@ -1,7 +1,6 @@
 # Test that validateATTAINSParam function correctly identify data validation errors, if any.
 test_that("Does the current valiadateATTAINSParam identify all non-valid ATTAINS parameter name?", {
   # Check for any new domain values for ATTAINS Parameters
-  data("UTAHDWQ")
   validate.test <- validateATTAINSParam(UTAHDWQ)
 
   # Retrieve the ATTAINS domain value from rExpertQuery
@@ -17,7 +16,6 @@ test_that("Does the current valiadateATTAINSParam identify all non-valid ATTAINS
 # Test that validateATTAINSUse functions correctly identify data validation errors, if any.
 test_that("Does the current valiadateATTAINSUse identify all non-valid ATTAINS use name?", {
   # Check for any new domain values for ATTAINS Uses
-  data("UTAHDWQ")
   validate.test <- validateATTAINSUse(UTAHDWQ)
 
   # Retrieve the ATTAINS domain value from rExpertQuery
@@ -33,7 +31,6 @@ test_that("Does the current valiadateATTAINSUse identify all non-valid ATTAINS u
 # Test that validateATTAINSOrg functions correctly identify data validation errors, if any.
 test_that("Does the current validateATTAINSOrg identify all non-valid ATTAINS org id?", {
   # Check for any new domain values for ATTAINS org_id
-  data("UTAHDWQ")
   validate.test <- validateATTAINSUse(UTAHDWQ)
 
   # Retrieve the ATTAINS domain value from rExpertQuery

@@ -45,7 +45,15 @@ validateATTAINSParam <- function(data) {
     result <- list(status = "Rejected", message = "ATTAINS.ParameterName(s) failed some validation checks. Please review the issues.")
   }
 
-  result$issues <- unique(validate::violating(submitted_data, out)[, "ATTAINS.ParameterName"])
+  result$issues <- unique(
+    data[which(
+      !toupper(data[,"ATTAINS.ParameterName"]) %in% 
+        toupper(
+          spsUtil::quiet(
+            rExpertQuery::EQ_DomainValues("param_name")[, "code"])
+          )
+      ), "ATTAINS.ParameterName"]
+    )
   result$nrows_fails <- report$fails
   result$nrows_passes <- report$passes
 
@@ -159,7 +167,15 @@ validateATTAINSUse <- function(data) {
   }
 
   # add values to list
-  result$issues <- unique(validate::violating(submitted_data, out)[, "ATTAINS.UseName"])
+  result$issues <- unique(
+    data[which(
+      !toupper(data[,"ATTAINS.UseName"]) %in% 
+        toupper(
+          spsUtil::quiet(
+            rExpertQuery::EQ_DomainValues("use_name")[, "code"])
+        )
+    ), "ATTAINS.UseName"]
+  )
   result$nrows_fails <- report$fails
   result$nrows_passes <- report$passes
 
@@ -216,7 +232,15 @@ validateATTAINSOrg <- function(data) {
   }
 
   # add values to list
-  result$issues <- unique(validate::violating(submitted_data, out)[, "ATTAINS.OrganizationIdentifier"])
+  result$issues <- unique(
+    data[which(
+      !toupper(data[,"ATTAINS.OrganizationIdentifier"]) %in% 
+        toupper(
+          spsUtil::quiet(
+            rExpertQuery::EQ_DomainValues("org_id")[, "code"])
+        )
+    ), "ATTAINS.OrganizationIdentifier"]
+  )
   result$nrows_fails <- report$fails
   result$nrows_passes <- report$passes
 
