@@ -248,6 +248,156 @@ validateATTAINSOrg <- function(data) {
 }
 
 
+#' Load User Data - Validate TADA Magnitude Units
+#'
+#' Loads a data frame provided by the user.
+#' @param data a R data frame. Future dev will allow other data file types.
+#' @return A list returning if all Magnitude units are current valid
+#' domain values or not. If not, identify which are not valid.
+#' @export
+#'
+#' @examples
+#' data("UTAHDWQ")
+#' validateWQXUnits(UTAHDWQ)
+#'
+validateWQXUnits <- function(data) {
+  # Load or read data if a file path is provided
+  if (is.character(data)) {
+    # Example: Read CSV
+    submitted_data <- utils::read.csv(data)
+  } else if (is.data.frame(data)) {
+    submitted_data <- data
+  } else {
+    stop("Input 'data' must be a data frame or a file path.")
+  }
+  
+  rules_values <- validate::validator(
+    toupper(MagnitudeUnit) %in% 
+      # read raw csv from url
+      toupper(
+        utils::read.csv(url(
+        "https://cdx.epa.gov/wqx/download/DomainValues/MeasureUnit.CSV"
+      ))[,"Target.Unit"]
+      )
+  )
+  
+  # Confront data with rules
+  out <- validate::confront(submitted_data, rules_values)
+  
+  # Generate validation report
+  report <- validate::summary(out)
+  
+  # Determine acceptance/rejection
+  if (all(validate::values(out))) { # Example: All rules passed
+    result <- list(status = "Accepted", report = report)
+  } else {
+    result <- list(status = "Rejected", report = report)
+  }
+  
+  # display message if accepted vs rejected
+  if (result$status == "Accepted") {
+    result <- list(status = "Accepted", message = "ATTAINS.OrganizationIdentifier(s) passed all validation checks.")
+  } else {
+    result <- list(status = "Rejected", message = "ATTAINS.OrganizationIdentifier(s) failed some validation checks. Please review the issues.")
+  }
+  
+  # add values to list
+  result$issues <- unique(
+    data[which(
+      !toupper(data[,"MagnitudeUnit"]) %in% 
+        toupper(
+          utils::read.csv(url(
+            "https://cdx.epa.gov/wqx/download/DomainValues/MeasureUnit.CSV"
+          ))[,"Target.Unit"])
+    ), "MagnitudeUnit"]
+  )
+  result$nrows_fails <- report$fails
+  result$nrows_passes <- report$passes
+  
+  return(result)
+}
+
+
+
+#' Load User Data - Validate Duration Units
+#'
+#' Loads a data frame provided by the user.
+#' @param data a R data frame. Future dev will allow other data file types.
+#' @return A list returning if all Duration units are current valid
+#' domain values or not. If not, identify which are not valid.
+#' @export
+#'
+#' @examples
+#' data("UTAHDWQ")
+#' validateDurationUnits(UTAHDWQ)
+#'
+validateDurationUnits <- function(data) {
+  # Load or read data if a file path is provided
+  if (is.character(data)) {
+    # Example: Read CSV
+    submitted_data <- utils::read.csv(data)
+  } else if (is.data.frame(data)) {
+    submitted_data <- data
+  } else {
+    stop("Input 'data' must be a data frame or a file path.")
+  }
+  
+  rules_values <- validate::validator(
+    toupper(DurationUnit) %in% 
+      # read raw csv from url
+      toupper(
+        c(
+          "n-hour",
+          "n-day",
+          "n-week",
+          "n-month",
+          "n-quarter"
+        )
+      )
+  )
+  
+  # Confront data with rules
+  out <- validate::confront(submitted_data, rules_values)
+  
+  # Generate validation report
+  report <- validate::summary(out)
+  
+  # Determine acceptance/rejection
+  if (all(validate::values(out))) { # Example: All rules passed
+    result <- list(status = "Accepted", report = report)
+  } else {
+    result <- list(status = "Rejected", report = report)
+  }
+  
+  # display message if accepted vs rejected
+  if (result$status == "Accepted") {
+    result <- list(status = "Accepted", message = "ATTAINS.OrganizationIdentifier(s) passed all validation checks.")
+  } else {
+    result <- list(status = "Rejected", message = "ATTAINS.OrganizationIdentifier(s) failed some validation checks. Please review the issues.")
+  }
+  
+  # add values to list
+  result$issues <- unique(
+    data[which(
+      !toupper(data[,"DurationUnit"]) %in% 
+        toupper(
+          c(
+            "n-hour",
+            "n-day",
+            "n-week",
+            "n-month",
+            "n-quarter"
+          )
+        )), "DurationUnit"]
+  )
+  result$nrows_fails <- report$fails
+  result$nrows_passes <- report$passes
+  
+  return(result)
+}
+
+
+
 #' Validate all data .xlsx in a Folder Path
 #'
 #' For each criteria tables submitted to a folder path (defaults to those submitted
@@ -447,7 +597,7 @@ exportErrors <- function(data, folder_path = NULL, excel = FALSE) {
         cols = 2,
         rows = 2:1000, # Adjust the row range as needed
         type = "list",
-        value = sprintf("'Index'!$A$2:$A$1100")
+        value = sprintf("'Index'!$A$2:$A$20000")
       )
     }
 
