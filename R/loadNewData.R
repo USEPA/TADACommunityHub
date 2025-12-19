@@ -342,18 +342,18 @@ validateDurationUnits <- function(data) {
     stop("Input 'data' must be a data frame or a file path.")
   }
   
+  domain <- toupper(
+    c(
+      "n-hour",
+      "n-day",
+      "n-week",
+      "n-month",
+      "n-quarter"
+    )
+  )
+  
   rules_values <- validate::validator(
-    toupper(DurationUnit) %in% 
-      # read raw csv from url
-      toupper(
-        c(
-          "n-hour",
-          "n-day",
-          "n-week",
-          "n-month",
-          "n-quarter"
-        )
-      )
+    toupper(DurationUnit) %in% domain
   )
   
   # Confront data with rules
@@ -371,27 +371,92 @@ validateDurationUnits <- function(data) {
   
   # display message if accepted vs rejected
   if (result$status == "Accepted") {
-    result <- list(status = "Accepted", message = "ATTAINS.OrganizationIdentifier(s) passed all validation checks.")
+    result <- list(status = "Accepted", message = "DurationUnit(s) passed all validation checks.")
   } else {
-    result <- list(status = "Rejected", message = "ATTAINS.OrganizationIdentifier(s) failed some validation checks. Please review the issues.")
+    result <- list(status = "Rejected", message = "DurationUnit(s) failed some validation checks. Please review the issues.")
   }
   
   # add values to list
-  result$issues <- unique(
-    data[which(
-      !toupper(data[,"DurationUnit"]) %in% 
-        toupper(
-          c(
-            "n-hour",
-            "n-day",
-            "n-week",
-            "n-month",
-            "n-quarter"
-          )
-        )), "DurationUnit"]
+  result$issues <- setdiff(
+    tolower(data$DurationUnit), tolower(domain)
   )
+    
   result$nrows_fails <- report$fails
   result$nrows_passes <- report$passes
+  
+  return(result)
+}
+
+
+
+#' Load User Data - Validate Duration Methods
+#'
+#' Loads a data frame provided by the user.
+#' @param data a R data frame. Future dev will allow other data file types.
+#' @return A list returning if all Duration Methods are current valid
+#' domain values or not. If not, identify which are not valid.
+#' @export
+#'
+#' @examples
+#' data("UTAHDWQ")
+#' validateDurationMethod(UTAHDWQ)
+#'
+validateDurationMethod <- function(data) {
+  # Load or read data if a file path is provided
+  if (is.character(data)) {
+    # Example: Read CSV
+    submitted_data <- utils::read.csv(data)
+  } else if (is.data.frame(data)) {
+    submitted_data <- data
+  } else {
+    stop("Input 'data' must be a data frame or a file path.")
+  }
+  
+  domain <- toupper(
+    c(
+      "arithmetic mean",
+      "arithmetic median",
+      "arithmetic max",
+      "arithmetic min",
+      "geometric mean",
+      "rolling geometric mean",
+      "rolling arithmetric mean"
+    )
+  )
+  
+  rules_values <- validate::validator(
+    toupper(DurationMethod) %in% domain
+  )
+  
+  # Confront data with rules
+  out <- validate::confront(submitted_data, rules_values)
+  
+  # Generate validation report
+  report <- validate::summary(out)
+  
+  # Determine acceptance/rejection
+  if (all(validate::values(out))) { # Example: All rules passed
+    result <- list(status = "Accepted", report = report)
+  } else {
+    result <- list(status = "Rejected", report = report)
+  }
+  
+  # display message if accepted vs rejected
+  if (result$status == "Accepted") {
+    result <- list(status = "Accepted", message = "DurationMethod(s) passed all validation checks.")
+  } else {
+    result <- list(status = "Rejected", message = "DurationMethod(s) failed some validation checks. Please review the issues.")
+  }
+  
+  # add values to list
+  result$issues <- setdiff(
+    tolower(data$DurationMethod), tolower(domain)
+  )
+  
+  result$nrows_fails <- report$fails
+  result$nrows_passes <- report$passes
+  
+  rm(domain, out, report)
   
   return(result)
 }
@@ -439,6 +504,14 @@ validateAll <- function(folder_path = NULL, validateColumn) {
   val_checks <- purrr::map(file_list, safe_my_function)
 
   names(val_checks) <- gsub("inst/extdata/", "", file_list)
+  
+  df_counts <- df %>%
+    mutate(
+      count_accepted = map_int(status, ~ sum(.x == "Accepted")),
+      count_rejected = map_int(status, ~ sum(.x == "Rejected"))
+    )
+  
+  print(df_counts)
   return(val_checks)
 }
 
