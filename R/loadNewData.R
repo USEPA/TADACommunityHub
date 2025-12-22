@@ -271,6 +271,11 @@ validateWQXUnits <- function(data) {
     stop("Input 'data' must be a data frame or a file path.")
   }
   
+  domain <- toupper(
+    utils::read.csv(url(
+      "https://cdx.epa.gov/wqx/download/DomainValues/MeasureUnit.CSV"
+    ))[,"Target.Unit"])
+  
   rules_values <- validate::validator(
     toupper(MagnitudeUnit) %in% 
       # read raw csv from url
@@ -302,15 +307,20 @@ validateWQXUnits <- function(data) {
   }
   
   # add values to list
-  result$issues <- unique(
-    data[which(
-      !toupper(data[,"MagnitudeUnit"]) %in% 
-        toupper(
-          utils::read.csv(url(
-            "https://cdx.epa.gov/wqx/download/DomainValues/MeasureUnit.CSV"
-          ))[,"Target.Unit"])
-    ), "MagnitudeUnit"]
-  )
+  result$issues <- data %>%
+    dplyr::filter(!toupper(MagnitudeUnit) %in% toupper(domain)) %>%
+    dplyr::select(MagnitudeUnit) %>%
+    dplyr::distinct()
+    
+  #   unique(
+  #   data[which(
+  #     !toupper(data[,"MagnitudeUnit"]) %in% 
+  #       toupper(
+  #         utils::read.csv(url(
+  #           "https://cdx.epa.gov/wqx/download/DomainValues/MeasureUnit.CSV"
+  #         ))[,"Target.Unit"])
+  #   ), "MagnitudeUnit"]
+  # )
   result$nrows_fails <- report$fails
   result$nrows_passes <- report$passes
   
@@ -342,7 +352,7 @@ validateDurationUnits <- function(data) {
     stop("Input 'data' must be a data frame or a file path.")
   }
   
-  domain <- toupper(
+  domain <-
     c(
       "n-hour",
       "n-day",
@@ -350,10 +360,15 @@ validateDurationUnits <- function(data) {
       "n-month",
       "n-quarter"
     )
-  )
   
   rules_values <- validate::validator(
-    toupper(DurationUnit) %in% domain
+    toupper(DurationUnit) %in% toupper(c(
+      "n-hour",
+      "n-day",
+      "n-week",
+      "n-month",
+      "n-quarter"
+    ))
   )
   
   # Confront data with rules
@@ -377,12 +392,98 @@ validateDurationUnits <- function(data) {
   }
   
   # add values to list
-  result$issues <- setdiff(
-    tolower(data$DurationUnit), tolower(domain)
-  )
+  result$issues <- data %>%
+    dplyr::filter(!toupper(DurationUnit) %in% toupper(domain)) %>%
+    dplyr::select(DurationUnit) %>%
+    dplyr::distinct()
     
   result$nrows_fails <- report$fails
   result$nrows_passes <- report$passes
+  
+  rm(domain, out, report)
+  
+  return(result)
+}
+
+
+
+#' Load User Data - Validate Frequency Methods
+#'
+#' Loads a data frame provided by the user.
+#' @param data a R data frame. Future dev will allow other data file types.
+#' @return A list returning if all frequency methods are current valid
+#' domain values or not. If not, identify which are not valid.
+#' @export
+#'
+#' @examples
+#' data("UTAHDWQ")
+#' validateFreqMethod(UTAHDWQ)
+#'
+validateFreqMethod <- function(data) {
+  # Load or read data if a file path is provided
+  if (is.character(data)) {
+    # Example: Read CSV
+    submitted_data <- utils::read.csv(data)
+  } else if (is.data.frame(data)) {
+    submitted_data <- data
+  } else {
+    stop("Input 'data' must be a data frame or a file path.")
+  }
+  
+  domain <-
+    c(
+      "Percent of samples not meeting",
+      "percentile",
+      "n-samples in 3 years",
+      "n-samples in 4 years",
+      "n-samples in 5 years",
+      "binomial test",
+      "NumberNotMeeting"
+      
+    )
+  
+  rules_values <- validate::validator(
+    toupper(FreqMethod) %in% toupper(c(
+      "Percent of samples not meeting",
+      "percentile",
+      "n-samples in 3 years",
+      "n-samples in 4 years",
+      "n-samples in 5 years",
+      "binomial test",
+      "NumberNotMeeting"
+    ))
+  )
+  
+  # Confront data with rules
+  out <- validate::confront(submitted_data, rules_values)
+  
+  # Generate validation report
+  report <- validate::summary(out)
+  
+  # Determine acceptance/rejection
+  if (all(validate::values(out))) { # Example: All rules passed
+    result <- list(status = "Accepted", report = report)
+  } else {
+    result <- list(status = "Rejected", report = report)
+  }
+  
+  # display message if accepted vs rejected
+  if (result$status == "Accepted") {
+    result <- list(status = "Accepted", message = "FreqMethod(s) passed all validation checks.")
+  } else {
+    result <- list(status = "Rejected", message = "FreqMethod(s) failed some validation checks. Please review the issues.")
+  }
+  
+  # add values to list
+  result$issues <- data %>%
+    dplyr::filter(!toupper(FreqMethod) %in% toupper(domain)) %>%
+    dplyr::select(FreqMethod) %>%
+    dplyr::distinct()
+  
+  result$nrows_fails <- report$fails
+  result$nrows_passes <- report$passes
+  
+  rm(domain, out, report)
   
   return(result)
 }
@@ -398,7 +499,6 @@ validateDurationUnits <- function(data) {
 #' @export
 #'
 #' @examples
-#' data("UTAHDWQ")
 #' validateDurationMethod(UTAHDWQ)
 #'
 validateDurationMethod <- function(data) {
@@ -412,7 +512,7 @@ validateDurationMethod <- function(data) {
     stop("Input 'data' must be a data frame or a file path.")
   }
   
-  domain <- toupper(
+  domain <-
     c(
       "arithmetic mean",
       "arithmetic median",
@@ -422,10 +522,18 @@ validateDurationMethod <- function(data) {
       "rolling geometric mean",
       "rolling arithmetric mean"
     )
-  )
   
   rules_values <- validate::validator(
-    toupper(DurationMethod) %in% domain
+    toupper(DurationMethod) %in% toupper(c(
+      "arithmetic mean",
+      "arithmetic median",
+      "arithmetic max",
+      "arithmetic min",
+      "geometric mean",
+      "rolling geometric mean",
+      "rolling arithmetric mean"
+    )
+    )
   )
   
   # Confront data with rules
@@ -449,9 +557,10 @@ validateDurationMethod <- function(data) {
   }
   
   # add values to list
-  result$issues <- setdiff(
-    tolower(data$DurationMethod), tolower(domain)
-  )
+  result$issues <- data %>%
+    dplyr::filter(!DurationMethod %in% domain) %>%
+    dplyr::select(DurationMethod) %>%
+    dplyr::distinct()
   
   result$nrows_fails <- report$fails
   result$nrows_passes <- report$passes
@@ -461,6 +570,81 @@ validateDurationMethod <- function(data) {
   return(result)
 }
 
+
+
+#' Load User Data - Validate Season
+#'
+#' Loads a data frame provided by the user.
+#' @param data a R data frame. Future dev will allow other data file types.
+#' @return A list returning if all seasons are current valid
+#' domain values or not. If not, identify which are not valid.
+#' @export
+#'
+#' @examples
+#' validateSeason(UTAHDWQ)
+#'
+validateSeason <- function(data) {
+  # Load or read data if a file path is provided
+  if (is.character(data)) {
+    # Example: Read CSV
+    submitted_data <- utils::read.csv(data)
+  } else if (is.data.frame(data)) {
+    submitted_data <- data
+  } else {
+    stop("Input 'data' must be a data frame or a file path.")
+  }
+  
+  domain <-
+    c(
+      "Summer",
+      "Fall",
+      "Spring",
+      "Winter"
+    )
+  
+  rules_values <- validate::validator(
+    toupper(Season) %in% toupper(c(
+      "Summer",
+      "Fall",
+      "Spring",
+      "Winter"
+    )
+    )
+  )
+  
+  # Confront data with rules
+  out <- validate::confront(submitted_data, rules_values)
+  
+  # Generate validation report
+  report <- validate::summary(out)
+  
+  # Determine acceptance/rejection
+  if (all(validate::values(out))) { # Example: All rules passed
+    result <- list(status = "Accepted", report = report)
+  } else {
+    result <- list(status = "Rejected", report = report)
+  }
+  
+  # display message if accepted vs rejected
+  if (result$status == "Accepted") {
+    result <- list(status = "Accepted", message = "Season(s) passed all validation checks.")
+  } else {
+    result <- list(status = "Rejected", message = "Season(s) failed some validation checks. Please review the issues.")
+  }
+  
+  # add values to list
+  result$issues <- data %>%
+    dplyr::filter(!Season %in% domain) %>%
+    dplyr::select(Season) %>%
+    dplyr::distinct()
+  
+  result$nrows_fails <- report$fails
+  result$nrows_passes <- report$passes
+  
+  rm(domain, out, report)
+  
+  return(result)
+}
 
 
 #' Validate all data .xlsx in a Folder Path
@@ -505,13 +689,13 @@ validateAll <- function(folder_path = NULL, validateColumn) {
 
   names(val_checks) <- gsub("inst/extdata/", "", file_list)
   
-  df_counts <- df %>%
-    mutate(
-      count_accepted = map_int(status, ~ sum(.x == "Accepted")),
-      count_rejected = map_int(status, ~ sum(.x == "Rejected"))
-    )
-  
-  print(df_counts)
+  # df_counts <- df %>%
+  #   mutate(
+  #     count_accepted = purrr::map_int(status, ~ sum(.x == "Accepted")),
+  #     count_rejected = purrr::map_int(status, ~ sum(.x == "Rejected"))
+  #   )
+  # 
+  # print(df_counts)
   return(val_checks)
 }
 
