@@ -5,6 +5,8 @@
 \title{Load User Data - Validate Season}
 \usage{
 validateSeason(data)
+
+validateSeason(data)
 }
 \arguments{
 \item{data}{a R data frame. Future dev will allow other data file types.}
@@ -12,11 +14,18 @@ validateSeason(data)
 \value{
 A list returning if all seasons are current valid
 domain values or not. If not, identify which are not valid.
+
+A list returning if all seasons are current valid
+domain values or not. If not, identify which are not valid.
 }
 \description{
 Loads a data frame provided by the user.
+
+Loads a data frame provided by the user.
 }
 \examples{
+validateSeason(UTAHDWQ)
+
 validateSeason(UTAHDWQ)
 
 }
