@@ -22,12 +22,13 @@ RoxygenNote: 7.3.3
 Imports:
     validate,
     purrr,
-    spsUtil, 
+    spsUtil,
     readxl,
     openxlsx,
     utils,
     tools,
-    rExpertQuery
+    rExpertQuery,
+    dplyr
 Depends: 
     R (>= 3.5)
 Remotes:

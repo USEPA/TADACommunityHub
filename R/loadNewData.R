@@ -437,7 +437,6 @@ validateFreqMethod <- function(data) {
       "n-samples in 5 years",
       "binomial test",
       "NumberNotMeeting"
-      
     )
   
   rules_values <- validate::validator(
@@ -617,7 +616,7 @@ validateSeason <- function(data) {
   report <- validate::summary(out)
   
   # Determine acceptance/rejection
-  if (all(validate::values(out))) { # Example: All rules passed
+  if (all(validate::values(out), na.rm = TRUE)) { # Example: All rules passed
     result <- list(status = "Accepted", report = report)
   } else {
     result <- list(status = "Rejected", report = report)
@@ -639,86 +638,11 @@ validateSeason <- function(data) {
   result$nrows_fails <- report$fails
   result$nrows_passes <- report$passes
   
-  rm(domain, out, report)
+  #rm(domain, out, report)
   
   return(result)
 }
 
-
-
-#' Load User Data - Validate Season
-#'
-#' Loads a data frame provided by the user.
-#' @param data a R data frame. Future dev will allow other data file types.
-#' @return A list returning if all seasons are current valid
-#' domain values or not. If not, identify which are not valid.
-#' @export
-#'
-#' @examples
-#' validateSeason(UTAHDWQ)
-#'
-validateSeason <- function(data) {
-  # Load or read data if a file path is provided
-  if (is.character(data)) {
-    # Example: Read CSV
-    submitted_data <- utils::read.csv(data)
-  } else if (is.data.frame(data)) {
-    submitted_data <- data
-  } else {
-    stop("Input 'data' must be a data frame or a file path.")
-  }
-  
-  domain <-
-    c(
-      "Summer",
-      "Fall",
-      "Spring",
-      "Winter"
-    )
-  
-  rules_values <- validate::validator(
-    toupper(Season) %in% toupper(c(
-      "Summer",
-      "Fall",
-      "Spring",
-      "Winter"
-    )
-    )
-  )
-  
-  # Confront data with rules
-  out <- validate::confront(submitted_data, rules_values)
-  
-  # Generate validation report
-  report <- validate::summary(out)
-  
-  # Determine acceptance/rejection
-  if (all(validate::values(out))) { # Example: All rules passed
-    result <- list(status = "Accepted", report = report)
-  } else {
-    result <- list(status = "Rejected", report = report)
-  }
-  
-  # display message if accepted vs rejected
-  if (result$status == "Accepted") {
-    result <- list(status = "Accepted", message = "Season(s) passed all validation checks.")
-  } else {
-    result <- list(status = "Rejected", message = "Season(s) failed some validation checks. Please review the issues.")
-  }
-  
-  # add values to list
-  result$issues <- data |>
-    dplyr::filter(!Season %in% domain) |>
-    dplyr::select(Season) |>
-    dplyr::distinct()
-  
-  result$nrows_fails <- report$fails
-  result$nrows_passes <- report$passes
-  
-  rm(domain, out, report)
-  
-  return(result)
-}
 
 
 #' Validate all data .xlsx in a Folder Path
