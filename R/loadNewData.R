@@ -128,8 +128,9 @@ validateWQXChar <- function(data) {
 #' @export
 #'
 #' @examples
-#' data("UTAHDWQ")
+#' \dontrun{
 #' validateATTAINSUse(UTAHDWQ)
+#' }
 #'
 validateATTAINSUse <- function(data) {
   # Load or read data if a file path is provided

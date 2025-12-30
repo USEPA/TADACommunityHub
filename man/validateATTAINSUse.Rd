@@ -17,7 +17,8 @@ domain values or not. If not, identify which are not valid.
 Loads a data frame provided by the user.
 }
 \examples{
-data("UTAHDWQ")
+\dontrun{
 validateATTAINSUse(UTAHDWQ)
+}
 
 }
