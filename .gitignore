@@ -1,6 +1,18 @@
+# RStudio files
 .Rproj.user
 .Rproj
 
 # History files
 .Rhistory
 .Rapp.history
+
+# Session Data files
+.RData
+.RDataTmp
+.Rdata
+.httr-oauth
+.DS_Store
+
+# Other files
+^\.github$
+^CONTRIBUTING.Rmd
