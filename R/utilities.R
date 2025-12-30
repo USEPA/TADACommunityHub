@@ -4,5 +4,10 @@ utils::globalVariables(c(
   "ATTAINS.ParameterName",
   "ATTAINS.UseName",
   "TADA.CharacteristicName",
-  "err"
+  "err",
+  "DurationMethod",
+  "DurationUnit",
+  "FreqMethod",
+  "MagnitudeUnit",
+  "Season"
 ))

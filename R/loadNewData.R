@@ -169,9 +169,9 @@ validateATTAINSUse <- function(data) {
   }
 
   # add values to list
-  result$issues <- data %>%
-    dplyr::filter(!toupper(ATTAINS.UseName) %in% toupper(domain)) %>%
-    dplyr::select(ATTAINS.UseName) %>%
+  result$issues <- data |>
+    dplyr::filter(!toupper(ATTAINS.UseName) %in% toupper(domain)) |>
+    dplyr::select(ATTAINS.UseName) |>
     dplyr::distinct()
   
   result$nrows_fails <- report$fails
@@ -305,9 +305,9 @@ validateWQXUnits <- function(data) {
   }
   
   # add values to list
-  result$issues <- data %>%
-    dplyr::filter(!toupper(MagnitudeUnit) %in% toupper(domain)) %>%
-    dplyr::select(MagnitudeUnit) %>%
+  result$issues <- data |>
+    dplyr::filter(!toupper(MagnitudeUnit) %in% toupper(domain)) |>
+    dplyr::select(MagnitudeUnit) |>
     dplyr::distinct()
     
   #   unique(
@@ -390,9 +390,9 @@ validateDurationUnits <- function(data) {
   }
   
   # add values to list
-  result$issues <- data %>%
-    dplyr::filter(!toupper(DurationUnit) %in% toupper(domain)) %>%
-    dplyr::select(DurationUnit) %>%
+  result$issues <- data |>
+    dplyr::filter(!toupper(DurationUnit) %in% toupper(domain)) |>
+    dplyr::select(DurationUnit) |>
     dplyr::distinct()
     
   result$nrows_fails <- report$fails
@@ -473,9 +473,9 @@ validateFreqMethod <- function(data) {
   }
   
   # add values to list
-  result$issues <- data %>%
-    dplyr::filter(!toupper(FreqMethod) %in% toupper(domain)) %>%
-    dplyr::select(FreqMethod) %>%
+  result$issues <- data |>
+    dplyr::filter(!toupper(FreqMethod) %in% toupper(domain)) |>
+    dplyr::select(FreqMethod) |>
     dplyr::distinct()
   
   result$nrows_fails <- report$fails
@@ -555,9 +555,9 @@ validateDurationMethod <- function(data) {
   }
   
   # add values to list
-  result$issues <- data %>%
-    dplyr::filter(!DurationMethod %in% domain) %>%
-    dplyr::select(DurationMethod) %>%
+  result$issues <- data |>
+    dplyr::filter(!DurationMethod %in% domain) |>
+    dplyr::select(DurationMethod) |>
     dplyr::distinct()
   
   result$nrows_fails <- report$fails
@@ -631,9 +631,9 @@ validateSeason <- function(data) {
   }
   
   # add values to list
-  result$issues <- data %>%
-    dplyr::filter(!Season %in% domain) %>%
-    dplyr::select(Season) %>%
+  result$issues <- data |>
+    dplyr::filter(!Season %in% domain) |>
+    dplyr::select(Season) |>
     dplyr::distinct()
   
   result$nrows_fails <- report$fails
@@ -707,9 +707,9 @@ validateSeason <- function(data) {
   }
   
   # add values to list
-  result$issues <- data %>%
-    dplyr::filter(!Season %in% domain) %>%
-    dplyr::select(Season) %>%
+  result$issues <- data |>
+    dplyr::filter(!Season %in% domain) |>
+    dplyr::select(Season) |>
     dplyr::distinct()
   
   result$nrows_fails <- report$fails
@@ -763,7 +763,7 @@ validateAll <- function(folder_path = NULL, validateColumn) {
 
   names(val_checks) <- gsub("inst/extdata/", "", file_list)
   
-  # df_counts <- df %>%
+  # df_counts <- df |>
   #   mutate(
   #     count_accepted = purrr::map_int(status, ~ sum(.x == "Accepted")),
   #     count_rejected = purrr::map_int(status, ~ sum(.x == "Rejected"))
