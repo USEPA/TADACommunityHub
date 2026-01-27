@@ -516,9 +516,12 @@ validateDurationMethod <- function(data) {
       "arithmetic median",
       "arithmetic max",
       "arithmetic min",
+      "arithmetic extremes",
       "geometric mean",
       "rolling geometric mean",
-      "rolling arithmetric mean"
+      "rolling arithmetic mean",
+      "mean of daily minima", # added 1/21/26 common only for DO it seems.
+      "mean of daily maxima" # added 1/21/26 common only for DO it seems.
     )
   
   rules_values <- validate::validator(
@@ -527,9 +530,12 @@ validateDurationMethod <- function(data) {
       "arithmetic median",
       "arithmetic max",
       "arithmetic min",
+      "arithmetic extremes",
       "geometric mean",
       "rolling geometric mean",
-      "rolling arithmetric mean"
+      "rolling arithmetic mean",
+      "mean of daily minima", # added 1/21/26 common only for DO it seems.
+      "mean of daily maxima" # added 1/21/26 common only for DO it seems.
     )
     )
   )
