@@ -17,7 +17,7 @@ library(remotes)
 
 remotes::install_github("USEPA/TADACommunityHub", ref = "main", dependencies = TRUE, force = TRUE)
 
-library(EPATADA)
+library(TADACommunityHub)
 ```
 
 ## Open-Source Code Policy
