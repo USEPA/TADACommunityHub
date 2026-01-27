@@ -270,11 +270,13 @@ validateWQXUnits <- function(data) {
     stop("Input 'data' must be a data frame or a file path.")
   }
   
+  # allowable values for this column. NAs are not allowed here 
   domain <- toupper(
     utils::read.csv(url(
       "https://cdx.epa.gov/wqx/download/DomainValues/MeasureUnit.CSV"
     ))[,"Target.Unit"])
   
+  # compare criteria df col to the allowable values defined
   rules_values <- validate::validator(
     toupper(MagnitudeUnit) %in% 
       # read raw csv from url
@@ -308,7 +310,7 @@ validateWQXUnits <- function(data) {
   # add values to list
   result$issues <- data |>
     dplyr::filter(!toupper(MagnitudeUnit) %in% toupper(domain)) |>
-    dplyr::select(MagnitudeUnit) |>
+    dplyr::select(TADA.CharacteristicName, MagnitudeUnit) |>
     dplyr::distinct()
     
   #   unique(
@@ -360,8 +362,10 @@ validateDurationUnits <- function(data) {
       "n-quarter"
     )
   
+  # compare df with allowable values
   rules_values <- validate::validator(
-    toupper(DurationUnit) %in% toupper(c(
+    # duration unit does not need to be filled, allow NA as pass
+    !is.na(toupper(DurationUnit)) %in% toupper(c(
       "n-hour",
       "n-day",
       "n-week",
@@ -441,7 +445,8 @@ validateFreqMethod <- function(data) {
     )
   
   rules_values <- validate::validator(
-    toupper(FreqMethod) %in% toupper(c(
+    # freq method does not need to be filled, allow NA as pass
+    !is.na(toupper(FreqMethod)) %in% toupper(c(
       "Percent of samples not meeting",
       "percentile",
       "n-samples in 3 years",
@@ -525,7 +530,8 @@ validateDurationMethod <- function(data) {
     )
   
   rules_values <- validate::validator(
-    toupper(DurationMethod) %in% toupper(c(
+    # duration method does not need to be filled, allow NA as pass
+    !is.na(toupper(DurationMethod)) %in% toupper(c(
       "arithmetic mean",
       "arithmetic median",
       "arithmetic max",
@@ -607,7 +613,8 @@ validateSeason <- function(data) {
     )
   
   rules_values <- validate::validator(
-    toupper(Season) %in% toupper(c(
+    # duration unit does not need to be filled, allow NA as pass
+    is.na(toupper(Season)) %in% toupper(c(
       "Summer",
       "Fall",
       "Spring",
