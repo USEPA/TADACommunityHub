@@ -8,7 +8,9 @@ test_that("Does the current valiadateATTAINSParam identify all non-valid ATTAINS
   # save(ATTAINS_param_name, file = "tests/testthat/data/ATTAINS_param_name.rda")  
   
   # Retrieve the ATTAINS domain value from rExpertQuery
-  load(system.file("tests/testthat/data", "ATTAINS_param_name.rda", package = "TADACommunityHub"))
+  file <- system.file("tests/testthat/data", "ATTAINS_param_name.rda", package = "TADACommunityHub")
+  load(file)
+  rm(file)
 
   # Validate_test should not contain any param values in ATTAINS.raw
   validate.test.param <- validate.test$issues
@@ -27,8 +29,10 @@ test_that("Does the current valiadateATTAINSUse identify all non-valid ATTAINS u
   # save(ATTAINS_use_name, file = "tests/testthat/data/ATTAINS_use_name.rda")
   
   # Retrieve the ATTAINS domain value from rExpertQuery
-  load(system.file("tests/testthat/data", "ATTAINS_use_name.rda", package = "TADACommunityHub"))
-
+  file <- system.file("tests/testthat/data", "ATTAINS_use_name.rda", package = "TADACommunityHub")
+  load(file)
+  rm(file)
+  
   # Validate_test should not contain any use values in ATTAINS.raw
   validate.test.use <- validate.test$issues
   ATTAINS.raw.use <- ATTAINS_use_name$code
@@ -49,8 +53,10 @@ test_that("Does the current validateATTAINSOrg identify all non-valid ATTAINS or
   # save(ATTAINS_org_id, file = "tests/testthat/data/ATTAINS_org_id.rda")
   
   # Retrieve the ATTAINS domain value from rExpertQuery
-  load(system.file("tests/testthat/data", "ATTAINS_org_id.rda", package = "TADACommunityHub"))
-
+  file <- system.file("tests/testthat/data", "ATTAINS_org_id.rda", package = "TADACommunityHub")
+  load(file)
+  rm(file)
+  
   # Validate_test should not contain any use values in ATTAINS.raw
   validate.test.org <- validate.test$issues
   ATTAINS.raw.org <- ATTAINS_org_id$code
