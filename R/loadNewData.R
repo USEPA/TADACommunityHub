@@ -302,9 +302,9 @@ validateWQXUnits <- function(data) {
   
   # display message if accepted vs rejected
   if (result$status == "Accepted") {
-    result <- list(status = "Accepted", message = "ATTAINS.OrganizationIdentifier(s) passed all validation checks.")
+    result <- list(status = "Accepted", message = "MagnitudeUnit(s) passed all validation checks.")
   } else {
-    result <- list(status = "Rejected", message = "ATTAINS.OrganizationIdentifier(s) failed some validation checks. Please review the issues.")
+    result <- list(status = "Rejected", message = "MagnitudeUnit(s) failed some validation checks. Please review the issues.")
   }
   
   # add values to list
