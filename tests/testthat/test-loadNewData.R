@@ -1,5 +1,8 @@
 # Test that validateATTAINSParam function correctly identify data validation errors, if any.
 test_that("Does the current valiadateATTAINSParam identify all non-valid ATTAINS parameter name?", {
+  testthat::skip_on_cran()
+  testthat::skip_if_offline()
+  
   # Check for any new domain values for ATTAINS Parameters
   validate.test <- validateATTAINSParam(UTAHDWQ)
 
@@ -15,6 +18,9 @@ test_that("Does the current valiadateATTAINSParam identify all non-valid ATTAINS
 
 # Test that validateATTAINSUse functions correctly identify data validation errors, if any.
 test_that("Does the current valiadateATTAINSUse identify all non-valid ATTAINS use name?", {
+  testthat::skip_on_cran()
+  testthat::skip_if_offline()
+  
   # Check for any new domain values for ATTAINS Uses
   validate.test <- validateATTAINSUse(UTAHDWQ)
 
@@ -30,6 +36,9 @@ test_that("Does the current valiadateATTAINSUse identify all non-valid ATTAINS u
 
 # Test that validateATTAINSOrg functions correctly identify data validation errors, if any.
 test_that("Does the current validateATTAINSOrg identify all non-valid ATTAINS org id?", {
+  testthat::skip_on_cran()
+  testthat::skip_if_offline()
+  
   # Check for any new domain values for ATTAINS org_id
   validate.test <- validateATTAINSUse(UTAHDWQ)
 
