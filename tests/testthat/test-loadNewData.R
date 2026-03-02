@@ -1,5 +1,14 @@
 # Test that validateATTAINSParam function correctly identify data validation errors, if any.
 test_that("Does the current valiadateATTAINSParam identify all non-valid ATTAINS parameter name?", {
+  # Using testthat's mocking
+  local_mocked_bindings(
+    fetch_api_data = function() {
+      spsUtil::quiet(rExpertQuery::EQ_DomainValues("param_name"))
+    }
+  )
+  
+  result <- fetch_api_data()
+  
   # Check for any new domain values for ATTAINS Parameters
   validate.test <- validateATTAINSParam(UTAHDWQ)
 
