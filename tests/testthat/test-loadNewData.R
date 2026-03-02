@@ -8,8 +8,7 @@ test_that("Does the current valiadateATTAINSParam identify all non-valid ATTAINS
   # saveRDS(ATTAINS_param_name, file = "tests/testthat/data/ATTAINS_param_name.rds")  
   
   # Retrieve the ATTAINS domain value from rExpertQuery
-  #ATTAINS_param_name <- my_wrapper()
-  #ATTAINS_param_name <- readRDS(system.file("extdata", "ATTAINS_param_name.rds", package = "TADACommunityHub"))
+  # ATTAINS_param_name <- readRDS(system.file("extdata", "ATTAINS_param_name.rds", package = "TADACommunityHub"))
 
   # Validate_test should not contain any param values in ATTAINS.raw
   validate.test.param <- validate.test$issues
@@ -28,7 +27,7 @@ test_that("Does the current valiadateATTAINSUse identify all non-valid ATTAINS u
   # saveRDS(ATTAINS_use_name, file = "tests/testthat/data/ATTAINS_use_name.rds")
   
   # Retrieve the ATTAINS domain value from rExpertQuery
-  #ATTAINS_use_name <- readRDS(system.file("extdata", "ATTAINS_use_name.rds", package = "TADACommunityHub"))
+  # ATTAINS_use_name <- readRDS(system.file("extdata", "ATTAINS_use_name.rds", package = "TADACommunityHub"))
   
   # Validate_test should not contain any use values in ATTAINS.raw
   validate.test.use <- validate.test$issues
@@ -46,11 +45,11 @@ test_that("Does the current validateATTAINSOrg identify all non-valid ATTAINS or
   validate.test <- validateATTAINSUse(UTAHDWQ)
 
   # Uncomment the two lines below if you need to update the test data
-  # ATTAINS_org_id <- spsUtil::quiet(rExpertQuery::EQ_DomainValues("org_id"))
+  ATTAINS_org_id <- spsUtil::quiet(rExpertQuery::EQ_DomainValues("org_id"))
   # saveRDS(ATTAINS_org_id, file = "tests/testthat/data/ATTAINS_org_id.rds")
   
   # Retrieve the ATTAINS domain value from rExpertQuery
-  ATTAINS_org_id <- readRDS(system.file("extdata", "ATTAINS_org_id.rds", package = "TADACommunityHub"))
+  # ATTAINS_org_id <- readRDS(system.file("extdata", "ATTAINS_org_id.rds", package = "TADACommunityHub"))
   
   # Validate_test should not contain any use values in ATTAINS.raw
   validate.test.org <- validate.test$issues
