@@ -3,7 +3,6 @@ test_that("Does the current valiadateATTAINSParam identify all non-valid ATTAINS
   # Check for any new domain values for ATTAINS Parameters
   validate.test <- validateATTAINSParam(UTAHDWQ)
 
-  # Uncomment the two lines below if you need to update the test data
   ATTAINS_param_name <- spsUtil::quiet(rExpertQuery::EQ_DomainValues("param_name"))
   # saveRDS(ATTAINS_param_name, file = "tests/testthat/data/ATTAINS_param_name.rds")  
   
@@ -22,7 +21,6 @@ test_that("Does the current valiadateATTAINSUse identify all non-valid ATTAINS u
   # Check for any new domain values for ATTAINS Uses
   validate.test <- validateATTAINSUse(UTAHDWQ)
 
-  # Uncomment the two lines below if you need to update the test data
   ATTAINS_use_name <- spsUtil::quiet(rExpertQuery::EQ_DomainValues("use_name"))
   # saveRDS(ATTAINS_use_name, file = "tests/testthat/data/ATTAINS_use_name.rds")
   
