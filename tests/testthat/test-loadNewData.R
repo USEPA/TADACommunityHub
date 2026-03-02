@@ -1,21 +1,14 @@
 # Test that validateATTAINSParam function correctly identify data validation errors, if any.
 test_that("Does the current valiadateATTAINSParam identify all non-valid ATTAINS parameter name?", {
-  # Using testthat's mocking
-  testthat::local_mocked_bindings(
-    fetch_api_data = function() {
-      spsUtil::quiet(rExpertQuery::EQ_DomainValues("param_name"))
-    }
-  )
-  
   # Check for any new domain values for ATTAINS Parameters
   validate.test <- validateATTAINSParam(UTAHDWQ)
 
   # Uncomment the two lines below if you need to update the test data
-  # ATTAINS_param_name <- spsUtil::quiet(rExpertQuery::EQ_DomainValues("param_name"))
+  ATTAINS_param_name <- spsUtil::quiet(rExpertQuery::EQ_DomainValues("param_name"))
   # saveRDS(ATTAINS_param_name, file = "tests/testthat/data/ATTAINS_param_name.rds")  
   
   # Retrieve the ATTAINS domain value from rExpertQuery
-  ATTAINS_param_name <- fetch_api_data()
+  #ATTAINS_param_name <- my_wrapper()
   #ATTAINS_param_name <- readRDS(system.file("extdata", "ATTAINS_param_name.rds", package = "TADACommunityHub"))
 
   # Validate_test should not contain any param values in ATTAINS.raw
@@ -31,11 +24,11 @@ test_that("Does the current valiadateATTAINSUse identify all non-valid ATTAINS u
   validate.test <- validateATTAINSUse(UTAHDWQ)
 
   # Uncomment the two lines below if you need to update the test data
-  # ATTAINS_use_name <- spsUtil::quiet(rExpertQuery::EQ_DomainValues("use_name"))
+  ATTAINS_use_name <- spsUtil::quiet(rExpertQuery::EQ_DomainValues("use_name"))
   # saveRDS(ATTAINS_use_name, file = "tests/testthat/data/ATTAINS_use_name.rds")
   
   # Retrieve the ATTAINS domain value from rExpertQuery
-  ATTAINS_use_name <- readRDS(system.file("extdata", "ATTAINS_use_name.rds", package = "TADACommunityHub"))
+  #ATTAINS_use_name <- readRDS(system.file("extdata", "ATTAINS_use_name.rds", package = "TADACommunityHub"))
   
   # Validate_test should not contain any use values in ATTAINS.raw
   validate.test.use <- validate.test$issues
@@ -46,8 +39,8 @@ test_that("Does the current valiadateATTAINSUse identify all non-valid ATTAINS u
 
 # Test that validateATTAINSOrg functions correctly identify data validation errors, if any.
 test_that("Does the current validateATTAINSOrg identify all non-valid ATTAINS org id?", {
-  testthat::skip_on_cran()
-  testthat::skip_if_offline()
+  # testthat::skip_on_cran()
+  # testthat::skip_if_offline()
   
   # Check for any new domain values for ATTAINS org_id
   validate.test <- validateATTAINSUse(UTAHDWQ)
