@@ -4,6 +4,22 @@ A collaborative hub where TADA (Tools for Automated Data Analysis) users share a
 
 TADA is being developed to help efficiently compile and evaluate [Water Quality Portal (WQP)](https://www.waterqualitydata.us/) data collected from water quality monitoring sites. TADA is both a stand-alone R package, [EPATADA](https://github.com/USEPA/EPATADA), and a series of R Shiny applications such as [TADAShiny](https://github.com/USEPA/TADAShiny).
 
+## Installation
+
+You must first have R and R Studio installed to use the TADACommunityHub R Package (see instructions below if needed). Our team is actively developing TADA and new submissions or updates to the TADA-compatible criteria table may be submitted regularly, therefore we highly recommend that you update the TADACommunityHub R Package and all of its dependency libraries each time you use the package. You can install and/or update the TADACommunityHub R Package and all dependencies by running:
+
+```{r}
+if(!"remotes"%in%installed.packages()){
+install.packages("remotes")
+}
+
+library(remotes)
+
+remotes::install_github("USEPA/TADACommunityHub", ref = "main", dependencies = TRUE, force = TRUE)
+
+library(TADACommunityHub)
+```
+
 ## Open-Source Code Policy
 
 Effective August 8, 2016, the [OMB Mandate: M-16-21; Federal Source Code Policy: Achieving Efficiency, Transparency, and Innovation through Reusable and Open Source Software](https://obamawhitehouse.archives.gov/sites/default/files/omb/memoranda/2016/m_16_21.pdf) applies to new custom-developed code created or procured by EPA consistent with the scope and applicability requirements of Office of Management and Budget's (OMB's) Federal Source Code Policy. In general, it states that all new custom-developed code by Federal Agencies should be made available and reusable as open-source code.
