@@ -1,3 +1,5 @@
-^TADACommunityHub\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+CONTRIBUTING.Rmd
+.github
+TADACommunityHub.Rproj
