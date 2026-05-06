@@ -3,3 +3,4 @@
 CONTRIBUTING.Rmd
 .github
 TADACommunityHub.Rproj
+^.*\.Rproj$

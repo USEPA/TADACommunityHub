@@ -1,20 +1,22 @@
 Package: TADACommunityHub
-Title: TADA Repository for State and Tribal Criteria and Methods
+Type: Package
+Title: TADA Community Hub: Share Templates for Reproducible Workflows
 Version: 0.0.0.9000
 Authors@R: 
     c(
-    person("Kenny", "Wong", , "Wong.Kenny@epa.gov", role = c("aut", "cre")),
-    person("Cristina", "Mullin", , "Mullin.Cristina@epa.gov", role = c("aut"))
+    person(given = "Kenny", 
+           family = "Wong",
+           role = c("aut", "cre")),
+    person(given = "Cristina",
+           family = "Mullin",
+           role = "aut",
+           email = "mullin.cristina@epa.gov",
+           comment = c(ORCID = "0000-0002-0615-6087"))
     )
-Description: This package will serve as a repository for holding state, tribal, 
-    and territorial criteria and methods that have been filled out and reviewed
-    by the appropriate subject matter expert for clean water act assessments. 
-    Future functionality will assist with handling accidental overwrites, 
-    submitting additional rows for parameters and uses of waters that have new 
-    criteria and methods developed, replacing existing parameter and use combinations
-    with updated criteria and method and validating data type submissions and 
-    conversions if needed (for example, empty columns may be read as a different 
-    data type and may need to be converted to a string or integer as necessary).
+Description: The TADA Community Hub offers a collaborative platform for users 
+    to share templates that support reproducible TADA workflows. This R package and 
+    GitHub repository includes criteria and methods files authored, reviewed, and
+    contributed by TADA community members such as EPA, states, tribes, and territories.
 License: CC0
 Encoding: UTF-8
 Depends: 
@@ -28,14 +30,18 @@ Imports:
     utils,
     tools,
     rExpertQuery,
-    dplyr
+    dplyr (>= 1.1.0)
 Suggests: 
     testthat (>= 3.0.0),
     sessioninfo,
     rcmdcheck
+Language: en-US
 LazyData: true
+LazyDataCompression: xz
 Roxygen: list(markdown = TRUE)
 Remotes:
     USEPA/rExpertQuery@develop
 Config/testthat/edition: 3
+Config/testthat/load-all: list(export_all = FALSE, helpers = FALSE)
 Config/roxygen2/version: 8.0.0
+Config/Needs/website: rmarkdown
