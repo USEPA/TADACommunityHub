@@ -13,7 +13,7 @@ the TADACommunityHub R validateAll function.}
 \item{folder_path}{The default is "inst/extdata/" to review user submitted criteria
 table to the TADACommunityHub repository for review.}
 
-\item{excel}{A boolean value. If TRUE, this will generate an excel spreadheet
+\item{excel}{A boolean value. If TRUE, this will generate an excel spreadsheet
 of all criteria tables in your defined folder to indicate what values not
 a valid entry in TADA format.}
 }
