@@ -846,8 +846,7 @@ validateSeason <- function(data) {
 # Run all TADA/ATTAINS/WQX validation functions on a single dataset
 runAllValidations <- function(
     data,
-    validators = NULL,
-    stop_on_error = FALSE
+    validators = NULL
 ) {
   # Default set of validator functions (named for clarity in the output)
   if (is.null(validators)) {
@@ -936,7 +935,7 @@ runAllValidations <- function(
 #' @export
 #'
 #' @examples
-#' review <- validateAll(validateColumn = validateWQXChar)
+#' review <- validateAllFiles(validateColumn = validateWQXChar)
 #'
 validateAllFiles <- function(folder_path = NULL, validateColumn) {
   if (is.null(folder_path)) {

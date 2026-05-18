@@ -23,6 +23,6 @@ to the inst/extdata folder path of this TADACommunityHub repository) this will
 validate all criteria table for a single column.
 }
 \examples{
-review <- validateAll(validateColumn = validateWQXChar)
+review <- validateAllFiles(validateColumn = validateWQXChar)
 
 }

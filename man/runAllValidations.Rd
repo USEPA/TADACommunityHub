@@ -4,7 +4,7 @@
 \alias{runAllValidations}
 \title{Runs All Validation Functions for a filled out criteria table}
 \usage{
-runAllValidations(data, validators = NULL, stop_on_error = FALSE)
+runAllValidations(data, validators = NULL)
 }
 \arguments{
 \item{data}{a R data frame with a TADA-compatible criteria table filled out.}
