@@ -70,7 +70,7 @@ validateATTAINSParam <- function(data) {
   status <- if (accepted) "Accepted" else "Rejected"
   
   # Identify problematic entries (including NA)
-  issues <- unique(stats::na.omit(submitted_data$ATTAINS.ParameterName[is.na(in_domain)]))
+  issues <- unique(stats::na.omit(submitted_data$ATTAINS.ParameterName[in_domain]))
   
   # Build result
   result <- list(
