@@ -912,12 +912,6 @@ runAllValidations <- function(
 }
 
 
-
-
-
-
-
-
 #' Validate all data .xlsx in a Folder Path
 #'
 #' For each criteria tables submitted to a folder path (defaults to those submitted

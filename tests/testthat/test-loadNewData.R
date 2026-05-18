@@ -189,7 +189,7 @@ test_that("validateSeason identifies all non-valid Season values", {
 # -----------------------------
 test_that("runAllValidations returns expected structure and summary", {
   # This runs all validators; some may be Rejected/Error depending on data
-  res <- runAllValidations(UTAHDWQ, stop_on_error = FALSE)
+  res <- runAllValidations(UTAHDWQ)
   
   expect_true(is.list(res))
   expect_true(all(c("overall_status", "summary", "results") %in% names(res)))
