@@ -825,7 +825,24 @@ validateSeason <- function(data) {
   )
 }
 
-
+#' Runs All Validation Functions for a filled out criteria table
+#'
+#' Runs all validation functions by default. Users can choose to select
+#' which validation functions to run with the validators argument input.
+#' @param data a R data frame with a TADA-compatible criteria table filled out.
+#' 
+#' @param validators a character list consisting of the TADACommunityHub
+#' validation functions to run. Default is null which will run all validation
+#' functions.
+#' 
+#' @return A list returning if all seasons are current valid
+#' domain values or not. If not, identify which are not valid.
+#' @export
+#'
+#' @examples
+#' runAllValidations(UTAHDWQ)
+#'
+# Validate Season (final format; NA allowed as pass)
 # Run all TADA/ATTAINS/WQX validation functions on a single dataset
 runAllValidations <- function(
     data,
@@ -852,7 +869,6 @@ runAllValidations <- function(
     tryCatch(
       fun(data),
       error = function(e) {
-        if (isTRUE(stop_on_error)) stop(e)
         list(
           status = "Error",
           message = paste0("Validation failed: ", conditionMessage(e)),
@@ -922,7 +938,7 @@ runAllValidations <- function(
 #' @examples
 #' review <- validateAll(validateColumn = validateWQXChar)
 #'
-validateAll <- function(folder_path = NULL, validateColumn) {
+validateAllFiles <- function(folder_path = NULL, validateColumn) {
   if (is.null(folder_path)) {
     print("No folder path specified, searching through all files currently found in inst/extdata/")
     folder_path <- system.file("extdata", package = "TADACommunityHub")
@@ -953,168 +969,4 @@ validateAll <- function(folder_path = NULL, validateColumn) {
   # 
   # print(df_counts)
   return(val_checks)
-}
-
-
-
-#' Export data with errors from validateAll
-#'
-#' Loads the list of unique errors in a column and exports it to df
-#' @param data a list of list of multiple data frame that is an output from
-#' the TADACommunityHub R validateAll function.
-#'
-#' @param folder_path The default is "inst/extdata/" to review user submitted criteria
-#' table to the TADACommunityHub repository for review.
-#'
-#' @param excel A boolean value. If TRUE, this will generate an excel spreadsheet
-#' of all criteria tables in your defined folder to indicate what values not
-#' a valid entry in TADA format.
-#'
-#' @return An excel spreadsheet that shows the invalid column values from the
-#' user supplied criteria table(s). Users can choose from a drop down list of
-#' allowable valid values for that column name.
-#'
-#' @export
-#'
-#' @examples
-#' review2 <- validateAll(validateColumn = validateATTAINSUse)
-#' err <- exportErrors(review2)
-#'
-exportErrors <- function(data, folder_path = NULL, excel = FALSE) {
-  # Create an empty list to store the dataframes
-  list_of_dataframes <- list()
-
-  # Consider flexibility in folder path in future.
-  if (is.null(folder_path)) {
-    print("No folder path specified, searching through all files currently found in inst/extdata/")
-    folder_path <- system.file("extdata", package = "TADACommunityHub")
-  }
-  file_list <- list.files(path = folder_path, pattern = "\\.xlsx$", full.names = TRUE)
-
-  # Loop through each XLSX file and read it into a dataframe, then add to the list
-  for (file_path in file_list) {
-    # Extract the file name without extension to use as a list element name
-    file_name <- tools::file_path_sans_ext(basename(file_path))
-
-    # Read the Excel file into a dataframe
-    df <- readxl::read_excel(file_path)
-
-    # Add the dataframe to the list, using the file name as the element name
-    list_of_dataframes[[file_name]] <- df
-  }
-
-  errors <- purrr::map(data, ~ .x$issues)
-
-  errors_col <- names(errors[[1]])
-
-  # Filter list of df by errors_col
-  list_of_dataframes <- purrr::map(list_of_dataframes, ~ {
-    if (errors_col %in% colnames(.x)) {
-      unique(.x[, errors_col])
-    } else {
-      .x[, errors_col] <- NA
-    }
-    # return(.x)
-  })
-
-  # Subset each data frame
-  result_list <- errors
-
-  if (excel == TRUE) {
-    # 1) openxlsx tab max length is 31 char
-    n <- nchar(folder_path) - 11
-    names(result_list) <- substr(names(err), 35, nchar(names(err)))
-    names(result_list) <- substr(names(result_list), 1, 30)
-
-    downloads_path <- file.path(Sys.getenv("USERPROFILE"), "Downloads")
-
-    file_name <- "my_exported_data.xlsx"
-
-    full_path <- file.path(downloads_path, file_name)
-
-    openxlsx::write.xlsx(result_list, file = full_path)
-
-    # 2. Open the target workbook
-    wb <- openxlsx::loadWorkbook(full_path)
-
-    # 3. Get the names of all sheets in the workbook
-    sheet_names <- names(wb)
-
-    # 4. Get ATTAINS Parameter domain
-    if (errors_col == "ATTAINS.ParameterName") {
-      list_values <- as.character(rExpertQuery::EQ_DomainValues(domain = "param_name")[, "code"])
-      openxlsx::addWorksheet(wb, "Index", visible = TRUE)
-      openxlsx::writeData(
-        wb,
-        "Index",
-        startCol = 1,
-        x = list_values
-      )
-    }
-
-    if (errors_col == "ATTAINS.UseName") {
-      list_values <- as.character(rExpertQuery::EQ_DomainValues(domain = "use_name")[, "code"])
-      openxlsx::addWorksheet(wb, "Index", visible = TRUE)
-      openxlsx::writeData(
-        wb,
-        "Index",
-        startCol = 1,
-        x = list_values
-      )
-    }
-
-    n_sheets <- length(wb$worksheets) - 1
-    # m <- ifelse(nrow(result_list[[i]]) == 0, 1, nrow(result_list[[i]]) + 1)
-
-    for (i in 1:n_sheets) {
-      if (errors_col == "ATTAINS.ParameterName") {
-        openxlsx::writeData(
-          wb,
-          sheet = sheet_names[i],
-          startCol = 2,
-          x = "Suggested.ATTAINS.ParameterName"
-        )
-      }
-      if (errors_col == "ATTAINS.UseName") {
-        openxlsx::writeData(
-          wb,
-          sheet = sheet_names[i],
-          startCol = 2,
-          x = "Suggested.ATTAINS.UseName"
-        )
-      }
-
-      # openxlsx::conditionalFormatting(
-      #   wb,
-      #   sheet = sheet_names[i],
-      #   cols = 2,
-      #   rows = 1:50,
-      #   type = "blanks",
-      #   style = openxlsx::createStyle(bgFill = "red")
-      # )
-
-      openxlsx::conditionalFormatting(
-        wb,
-        sheet = sheet_names[i],
-        cols = 2,
-        rows = 1:50,
-        type = "notBlanks",
-        style = openxlsx::createStyle(bgFill = "green")
-      )
-
-      # Apply data validation to the second column (col = 2) for a range of rows
-      # For example, rows 2 to 100
-      openxlsx::dataValidation(
-        wb,
-        sheet = sheet_names[i],
-        cols = 2,
-        rows = 2:1000, # Adjust the row range as needed
-        type = "list",
-        value = sprintf("'Index'!$A$2:$A$20000")
-      )
-    }
-
-    openxlsx::saveWorkbook(wb, full_path, overwrite = TRUE)
-  }
-  return(result_list)
 }
