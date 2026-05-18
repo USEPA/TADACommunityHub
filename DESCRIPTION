@@ -27,15 +27,13 @@ Imports:
     purrr,
     spsUtil,
     readxl,
-    openxlsx,
     utils,
-    tools,
-    rExpertQuery,
-    dplyr (>= 1.1.0)
+    rExpertQuery
 Suggests: 
     testthat (>= 3.0.0),
     sessioninfo,
-    rcmdcheck
+    rcmdcheck,
+    dplyr (>= 1.1.0)
 Language: en-US
 LazyData: true
 LazyDataCompression: xz
