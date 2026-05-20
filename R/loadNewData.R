@@ -851,15 +851,15 @@ runAllValidations <- function(
   # Default set of validator functions (named for clarity in the output)
   if (is.null(validators)) {
     validators <- list(
-      ATTAINSParam     = validateATTAINSParam,
-      WQXChar          = validateWQXChar,
-      ATTAINSUse       = validateATTAINSUse,
-      ATTAINSOrg       = validateATTAINSOrg,
-      WQXUnits         = validateWQXUnits,
-      DurationUnits    = validateDurationUnits,
-      FreqMethod       = validateFreqMethod,
-      DurationMethod   = validateDurationMethod,
-      Season           = validateSeason
+      ATTAINS.ParameterName = validateATTAINSParam,
+      TADA.CharacteristicName = validateWQXChar,
+      ATTAINS.UseName = validateATTAINSUse,
+      ATTAINS.OrganizationIdentifier = validateATTAINSOrg,
+      MagnitudeUnits = validateWQXUnits,
+      DurationUnits = validateDurationUnits,
+      FreqMethod = validateFreqMethod,
+      DurationMethod = validateDurationMethod,
+      Season = validateSeason
     )
   }
   
@@ -903,12 +903,22 @@ runAllValidations <- function(
     !any(summary$status %in% c("Rejected", "Error"), na.rm = TRUE)
   ) "Accepted" else "Rejected"
   
+  rejects <- summary[summary$status == "Rejected", 1]
+  
+  if (length(rejects) > 0 ) {
+    message("Overall Status ", overall_status, ": Invalid entries were found in your criteria table under these column names.", "\n\n",
+            "Please review:\n",
+            paste0(rejects, ", ")
+    ) } else {
+      message("Overall Status ", overall_status, ": All values entered into your criteria table are valid! ")
+    }
+  
   # Return a structured list
-  list(
+  return(list(
     overall_status = overall_status,
     summary = summary,
     results = results
-  )
+  ))
 }
 
 
