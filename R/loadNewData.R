@@ -409,11 +409,11 @@ validateWQXUnits <- function(data) {
     error = function(e) stop("Could not retrieve WQX MeasureUnit domain values: ", conditionMessage(e))
   )
   
-  if (!"Target.Unit" %in% names(domain_df)) {
-    stop("WQX MeasureUnit domain file does not contain column 'Target.Unit'.")
+  if (!"Code" %in% names(domain_df)) {
+    stop("WQX MeasureUnit domain file does not contain column 'Code'.")
   }
   
-  domain_codes <- unique(toupper(as.character(domain_df[["Target.Unit"]])))
+  domain_codes <- unique(toupper(as.character(domain_df[["Code"]])))
   domain_codes <- domain_codes[!is.na(domain_codes) & nzchar(domain_codes)]
   if (length(domain_codes) == 0L) {
     stop("Retrieved WQX MeasureUnit domain values are empty; cannot validate.")
@@ -842,9 +842,6 @@ validateSeason <- function(data) {
 #' @examples
 #' runAllValidations(UTAHDWQ)
 #'
-# Validate Season (final format; NA allowed as pass)
-# Run all TADA/ATTAINS/WQX validation functions on a single dataset
-# Run all TADA/ATTAINS/WQX validation functions on a single dataset
 # Run all TADA/ATTAINS/WQX validation functions on a single dataset
 runAllValidations <- function(
     data,
