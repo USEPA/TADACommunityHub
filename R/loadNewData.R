@@ -844,6 +844,8 @@ validateSeason <- function(data) {
 #'
 # Validate Season (final format; NA allowed as pass)
 # Run all TADA/ATTAINS/WQX validation functions on a single dataset
+# Run all TADA/ATTAINS/WQX validation functions on a single dataset
+# Run all TADA/ATTAINS/WQX validation functions on a single dataset
 runAllValidations <- function(
     data,
     validators = NULL
@@ -903,19 +905,67 @@ runAllValidations <- function(
     !any(summary$status %in% c("Rejected", "Error"), na.rm = TRUE)
   ) "Accepted" else "Rejected"
   
-  rejects <- summary[summary$status == "Rejected", 1]
+  # Build a user-readable message and return it instead of printing
+  rejected_idx <- which(summary$status == "Rejected")
+  error_idx    <- which(summary$status == "Error")
   
-  if (length(rejects) > 0 ) {
-    message("Overall Status ", overall_status, ": Invalid entries were found in your criteria table under these column names.", "\n\n",
-            "Please review:\n",
-            paste0(rejects, ", ")
-    ) } else {
-      message("Overall Status ", overall_status, ": All values entered into your criteria table are valid! ")
+  # How many invalid values to show per validator (configurable via option)
+  limit <- getOption("TADA.print_issues_limit", 10L)
+  
+  lines <- character(0)
+  
+  # Add rejected validators with their invalid values
+  if (length(rejected_idx) > 0L) {
+    for (i in rejected_idx) {
+      vname <- summary$validator[i]
+      iss   <- results[[i]]$issues
+      if (is.null(iss)) {
+        lines <- c(lines, sprintf("- %s: invalid values present (details unavailable).", vname))
+      } else {
+        iss <- unique(stats::na.omit(iss))
+        n   <- length(iss)
+        if (n == 0L) {
+          lines <- c(lines, sprintf("- %s: invalid values present (0 reported after NA removal).", vname))
+        } else {
+          shown <- iss[seq_len(min(n, limit))]
+          # Quote values for clarity
+          shown_fmt <- paste(sprintf("'%s'", shown), collapse = ", ")
+          if (n > limit) {
+            lines <- c(lines, sprintf("- %s: %d invalid value(s): %s ... (+%d more)", vname, n, shown_fmt, n - limit))
+          } else {
+            lines <- c(lines, sprintf("- %s: %d invalid value(s): %s", vname, n, shown_fmt))
+          }
+        }
+      }
     }
+  }
   
-  # Return a structured list
+  # Add error validators with their messages
+  if (length(error_idx) > 0L) {
+    for (i in error_idx) {
+      vname <- summary$validator[i]
+      msg   <- results[[i]]$message
+      if (is.null(msg)) msg <- "Unknown error."
+      lines <- c(lines, sprintf("- %s: ERROR - %s", vname, msg))
+    }
+  }
+  
+  overall_message <- if (length(lines) > 0L) {
+    paste0(
+      "Overall Status ", overall_status, 
+      ": Invalid entries were found in your criteria table.\n\nDetails:\n",
+      paste(lines, collapse = "\n")
+    )
+  } else {
+    paste0(
+      "Overall Status ", overall_status, 
+      ": All values entered into your criteria table are valid! "
+    )
+  }
+  
+  # Return a structured list (now includes overall_message)
   return(list(
-    overall_status = overall_status,
+    overall_status = overall_message,
     summary = summary,
     results = results
   ))
