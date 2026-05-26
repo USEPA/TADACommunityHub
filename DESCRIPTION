@@ -27,15 +27,13 @@ Imports:
     purrr,
     spsUtil,
     readxl,
-    openxlsx,
     utils,
-    tools,
-    rExpertQuery,
-    dplyr (>= 1.1.0)
+    rExpertQuery
 Suggests: 
     testthat (>= 3.0.0),
     sessioninfo,
-    rcmdcheck
+    rcmdcheck,
+    dplyr (>= 1.1.0)
 Language: en-US
 LazyData: true
 LazyDataCompression: xz
@@ -46,3 +44,4 @@ Config/testthat/edition: 3
 Config/testthat/load-all: list(export_all = FALSE, helpers = FALSE)
 Config/roxygen2/version: 8.0.0
 Config/Needs/website: rmarkdown
+RoxygenNote: 7.3.3

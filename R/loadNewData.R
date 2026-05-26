@@ -13,50 +13,80 @@
 validateATTAINSParam <- function(data) {
   # Load or read data if a file path is provided
   if (is.character(data)) {
-    # Example: Read CSV
-    submitted_data <- utils::read.csv(data)
+    submitted_data <- utils::read.csv(data, stringsAsFactors = FALSE)
   } else if (is.data.frame(data)) {
     submitted_data <- data
   } else {
     stop("Input 'data' must be a data frame or a file path.")
   }
-
-  rules_values <- validate::validator(
-    toupper(ATTAINS.ParameterName) %in% toupper(spsUtil::quiet(rExpertQuery::EQ_DomainValues("param_name")[, "code"]))
+  
+  # Ensure required column exists
+  if (!"ATTAINS.ParameterName" %in% names(submitted_data)) {
+    stop("Required column 'ATTAINS.ParameterName' is missing from the input.")
+  }
+  
+  # Normalize type
+  submitted_data$ATTAINS.ParameterName <- as.character(submitted_data$ATTAINS.ParameterName)
+  
+  # Get domain values (per EQ_DomainValues message: use the 'name' column)
+  domain_df <- tryCatch(
+    {
+      # Suppress messages from the web service call
+      spsUtil::quiet(rExpertQuery::EQ_DomainValues("param_name"))
+    },
+    error = function(e) stop("Could not retrieve domain values: ", conditionMessage(e))
   )
-
-  # Confront data with rules
-  out <- validate::confront(submitted_data, rules_values)
-
+  
+  # Extract domain column
+  domain_codes <- toupper(as.character(domain_df[["name"]]))
+  
+  # Build validation rule
+  rules_values <- validate::validator(
+    toupper(ATTAINS.ParameterName) %in% domain_codes
+  )
+  
+  # Confront data with rules, passing domain_codes as a reference environment
+  # This avoids evaluation errors where 'domain_codes' is not found.
+  out <- validate::confront(
+    submitted_data,
+    rules_values,
+    ref = list(domain_codes = domain_codes)
+  )
+  
   # Generate validation report
   report <- validate::summary(out)
-
-  # Determine acceptance/rejection
-  if (all(validate::values(out))) { # Example: All rules passed
-    result <- list(status = "Accepted", report = report)
-  } else {
-    result <- list(status = "Rejected", report = report)
-  }
-
-  # display message if accepted vs rejected
-  if (result$status == "Accepted") {
-    result <- list(status = "Accepted", message = "ATTAINS.ParameterName(s) passed all validation checks.")
-  } else {
-    result <- list(status = "Rejected", message = "ATTAINS.ParameterName(s) failed some validation checks. Please review the issues.")
-  }
-
-  result$issues <- unique(
-    data[which(
-      !toupper(data[,"ATTAINS.ParameterName"]) %in% 
-        toupper(
-          spsUtil::quiet(
-            rExpertQuery::EQ_DomainValues("param_name")[, "code"])
-          )
-      ), "ATTAINS.ParameterName"]
-    )
-  result$nrows_fails <- report$fails
-  result$nrows_passes <- report$passes
-
+  
+  # Compute pass/fail counts directly (robust even if validate reports an error)
+  in_domain <- toupper(submitted_data[["ATTAINS.ParameterName"]]) %in% domain_codes
+  nrows_passes <- report$passes
+  nrows_fails  <- report$fails
+  nrows_na <- report$nNA
+  
+  # Determine acceptance: reject if any fail OR if validate reported an error
+  vals <- validate::values(out)
+  has_rule_error <- any(isTRUE(report$error))
+  accepted <- (nrows_fails == 0L) && !has_rule_error && isTRUE(all(vals))
+  
+  status <- if (accepted) "Accepted" else "Rejected"
+  
+  # Identify problematic entries (including NA)
+  issues <- unique(stats::na.omit(submitted_data$ATTAINS.ParameterName[!in_domain]))
+  
+  # Build result
+  result <- list(
+    status = status,
+    message = if (accepted) {
+      "ATTAINS.ParameterName(s) passed all validation checks."
+    } else {
+      "ATTAINS.ParameterName(s) failed some validation checks. Please review the issues."
+    },
+    report = report,
+    issues = issues,
+    nrows_fails = nrows_fails,
+    nrows_passes = nrows_passes,
+    nrows_na = nrows_na
+  )
+  
   return(result)
 }
 
@@ -74,47 +104,89 @@ validateATTAINSParam <- function(data) {
 #' data("UTAHDWQ")
 #' validateWQXChar(UTAHDWQ)
 #'
+# Validate WQX Characteristic Names against WQX domain list
 validateWQXChar <- function(data) {
   # Load or read data if a file path is provided
   if (is.character(data)) {
-    # Example: Read CSV
-    submitted_data <- utils::read.csv(data)
+    submitted_data <- utils::read.csv(data, stringsAsFactors = FALSE)
   } else if (is.data.frame(data)) {
     submitted_data <- data
   } else {
     stop("Input 'data' must be a data frame or a file path.")
   }
-
-  rules_values <- validate::validator(
-    toupper(TADA.CharacteristicName) %in% toupper(utils::read.csv(url("https://cdx.epa.gov/wqx/download/DomainValues/Characteristic.CSV"))[, "Name"])
+  
+  # Ensure required column exists
+  if (!"TADA.CharacteristicName" %in% names(submitted_data)) {
+    stop("Required column 'TADA.CharacteristicName' is missing from the input.")
+  }
+  
+  # Normalize type
+  submitted_data$TADA.CharacteristicName <- as.character(submitted_data$TADA.CharacteristicName)
+  
+  # Get domain values from WQX download
+  domain_df <- tryCatch(
+    utils::read.csv(
+      url("https://cdx.epa.gov/wqx/download/DomainValues/Characteristic.CSV"),
+      stringsAsFactors = FALSE
+    ),
+    error = function(e) stop("Could not retrieve WQX Characteristic domain values: ", conditionMessage(e))
   )
-
-  # Confront data with rules
-  out <- validate::confront(submitted_data, rules_values)
-
+  
+  if (!"Name" %in% names(domain_df)) {
+    stop("WQX Characteristic domain file does not contain column 'Name'.")
+  }
+  
+  domain_codes <- unique(toupper(as.character(domain_df[["Name"]])))
+  domain_codes <- domain_codes[!is.na(domain_codes) & nzchar(domain_codes)]
+  if (length(domain_codes) == 0L) {
+    stop("Retrieved WQX Characteristic domain values are empty; cannot validate.")
+  }
+  
+  # Build validation rule
+  rules_values <- validate::validator(
+    toupper(TADA.CharacteristicName) %in% domain_codes
+  )
+  
+  # Confront data with rules, passing domain_codes as reference
+  out <- validate::confront(
+    submitted_data,
+    rules_values,
+    ref = list(domain_codes = domain_codes)
+  )
+  
   # Generate validation report
   report <- validate::summary(out)
-
-  # Determine acceptance/rejection
-  if (all(validate::values(out))) { # Example: All rules passed
-    result <- list(status = "Accepted", report = report)
-  } else {
-    result <- list(status = "Rejected", report = report)
-  }
-
-  # display message if accepted vs rejected
-  if (result$status == "Accepted") {
-    result <- list(status = "Accepted", message = "WQX.CharacteristicName(s) passed all validation checks.")
-  } else {
-    result <- list(status = "Rejected", message = "WQX.CharacteristicName(s) failed some validation checks. Please review the issues.")
-  }
-
-  # add values to list
-  result$issues <- unique(validate::violating(submitted_data, out)[, "TADA.CharacteristicName"])
-  result$nrows_fails <- report$fails
-  result$nrows_passes <- report$passes
-
-  return(result)
+  
+  # Compute pass/fail counts directly
+  in_domain <- toupper(submitted_data[["TADA.CharacteristicName"]]) %in% domain_codes
+  nrows_passes <- report$passes
+  nrows_fails  <- report$fails
+  nrows_na <- report$nNA
+  
+  # Determine acceptance
+  vals <- validate::values(out)
+  has_rule_error <- any(isTRUE(report$error))
+  accepted <- (nrows_fails == 0L) && !has_rule_error && isTRUE(all(vals))
+  
+  status <- if (accepted) "Accepted" else "Rejected"
+  
+  # Identify problematic entries (excluding NA)
+  issues <- unique(stats::na.omit(submitted_data$TADA.CharacteristicName[!in_domain]))
+  
+  # Build result
+  list(
+    status = status,
+    message = if (accepted) {
+      "WQX.CharacteristicName(s) passed all validation checks."
+    } else {
+      "WQX.CharacteristicName(s) failed some validation checks. Please review the issues."
+    },
+    report = report,
+    issues = issues,
+    nrows_fails = nrows_fails,
+    nrows_passes = nrows_passes,
+    nrows_na = nrows_na
+  )
 }
 
 
@@ -132,120 +204,170 @@ validateWQXChar <- function(data) {
 #' validateATTAINSUse(UTAHDWQ)
 #' }
 #'
+# Validate ATTAINS Use Names (final format)
 validateATTAINSUse <- function(data) {
   # Load or read data if a file path is provided
   if (is.character(data)) {
-    # Example: Read CSV
-    submitted_data <- utils::read.csv(data)
+    submitted_data <- utils::read.csv(data, stringsAsFactors = FALSE)
   } else if (is.data.frame(data)) {
     submitted_data <- data
   } else {
     stop("Input 'data' must be a data frame or a file path.")
   }
-
-  domain <- spsUtil::quiet(rExpertQuery::EQ_DomainValues("use_name")[, "code"])
   
-  rules_values <- validate::validator(
-    toupper(ATTAINS.UseName) %in% toupper(spsUtil::quiet(rExpertQuery::EQ_DomainValues("use_name")[, "code"]))
+  # Ensure required column exists
+  if (!"ATTAINS.UseName" %in% names(submitted_data)) {
+    stop("Required column 'ATTAINS.UseName' is missing from the input.")
+  }
+  
+  # Normalize type
+  submitted_data$ATTAINS.UseName <- as.character(submitted_data$ATTAINS.UseName)
+  
+  # Get domain values
+  domain_df <- tryCatch(
+    spsUtil::quiet(rExpertQuery::EQ_DomainValues("use_name")),
+    error = function(e) stop("Could not retrieve ATTAINS Use domain values: ", conditionMessage(e))
   )
-
+  
+  if (!"code" %in% names(domain_df)) {
+    stop("ATTAINS Use domain values do not contain column 'code'.")
+  }
+  
+  domain_codes <- unique(toupper(as.character(domain_df[["code"]])))
+  domain_codes <- domain_codes[!is.na(domain_codes) & nzchar(domain_codes)]
+  if (length(domain_codes) == 0L) {
+    stop("Retrieved ATTAINS Use domain values are empty; cannot validate.")
+  }
+  
+  # Build validation rule
+  rules_values <- validate::validator(
+    toupper(ATTAINS.UseName) %in% domain_codes
+  )
+  
   # Confront data with rules
-  out <- validate::confront(submitted_data, rules_values)
-
+  out <- validate::confront(
+    submitted_data,
+    rules_values,
+    ref = list(domain_codes = domain_codes)
+  )
+  
   # Generate validation report
   report <- validate::summary(out)
-
-  # Determine acceptance/rejection
-  if (all(validate::values(out))) { # Example: All rules passed
-    result <- list(status = "Accepted", report = report)
-  } else {
-    result <- list(status = "Rejected", report = report)
-  }
-
-  # display message if accepted vs rejected
-  if (result$status == "Accepted") {
-    result <- list(status = "Accepted", message = "ATTAINS.UseName(s) passed all validation checks.")
-  } else {
-    result <- list(status = "Rejected", message = "ATTAINS.UseName(s) failed some validation checks. Please review the issues.")
-  }
-
-  # add values to list
-  result$issues <- data |>
-    dplyr::filter(!toupper(ATTAINS.UseName) %in% toupper(domain)) |>
-    dplyr::select(ATTAINS.UseName) |>
-    dplyr::distinct()
   
-  result$nrows_fails <- report$fails
-  result$nrows_passes <- report$passes
-
-  return(result)
+  # Compute pass/fail/NA counts from report
+  in_domain <- toupper(submitted_data[["ATTAINS.UseName"]]) %in% domain_codes
+  nrows_passes <- report$passes
+  nrows_fails  <- report$fails
+  nrows_na     <- report$nNA
+  
+  # Determine acceptance
+  vals <- validate::values(out)
+  has_rule_error <- any(isTRUE(report$error))
+  accepted <- (nrows_fails == 0L) && !has_rule_error && isTRUE(all(vals))
+  
+  status <- if (accepted) "Accepted" else "Rejected"
+  
+  # Identify problematic entries (excluding NA)
+  issues <- unique(stats::na.omit(submitted_data$ATTAINS.UseName[!in_domain]))
+  
+  # Build result
+  list(
+    status = status,
+    message = if (accepted) {
+      "ATTAINS.UseName(s) passed all validation checks."
+    } else {
+      "ATTAINS.UseName(s) failed some validation checks. Please review the issues."
+    },
+    report = report,
+    issues = issues,
+    nrows_fails = nrows_fails,
+    nrows_passes = nrows_passes,
+    nrows_na = nrows_na
+  )
 }
 
 
-
-#' Load User Data - Validate ATTAINS Org Names
-#'
-#' Loads a data frame provided by the user.
-#' @param data a R data frame. Future dev will allow other data file types.
-#' @return A list returning if all ATTAINS organization names are current valid
-#' domain values or not. If not, identify which are not valid.
-#' @export
-#'
-#' @examples
-#' data("UTAHDWQ")
-#' validateATTAINSOrg(UTAHDWQ)
-#'
+# Validate ATTAINS Organization Identifiers (final format)
 validateATTAINSOrg <- function(data) {
   # Load or read data if a file path is provided
   if (is.character(data)) {
-    # Example: Read CSV
-    submitted_data <- utils::read.csv(data)
+    submitted_data <- utils::read.csv(data, stringsAsFactors = FALSE)
   } else if (is.data.frame(data)) {
     submitted_data <- data
   } else {
     stop("Input 'data' must be a data frame or a file path.")
   }
-
-  rules_values <- validate::validator(
-    toupper(ATTAINS.OrganizationIdentifier) %in% toupper(spsUtil::quiet(rExpertQuery::EQ_DomainValues("org_id")[, "code"]))
+  
+  # Ensure required column exists
+  if (!"ATTAINS.OrganizationIdentifier" %in% names(submitted_data)) {
+    stop("Required column 'ATTAINS.OrganizationIdentifier' is missing from the input.")
+  }
+  
+  # Normalize type
+  submitted_data$ATTAINS.OrganizationIdentifier <- as.character(submitted_data$ATTAINS.OrganizationIdentifier)
+  
+  # Get domain values
+  domain_df <- tryCatch(
+    spsUtil::quiet(rExpertQuery::EQ_DomainValues("org_id")),
+    error = function(e) stop("Could not retrieve ATTAINS Organization domain values: ", conditionMessage(e))
   )
-
+  
+  if (!"code" %in% names(domain_df)) {
+    stop("ATTAINS Organization domain values do not contain column 'code'.")
+  }
+  
+  domain_codes <- unique(toupper(as.character(domain_df[["code"]])))
+  domain_codes <- domain_codes[!is.na(domain_codes) & nzchar(domain_codes)]
+  if (length(domain_codes) == 0L) {
+    stop("Retrieved ATTAINS Organization domain values are empty; cannot validate.")
+  }
+  
+  # Build validation rule
+  rules_values <- validate::validator(
+    toupper(ATTAINS.OrganizationIdentifier) %in% domain_codes
+  )
+  
   # Confront data with rules
-  out <- validate::confront(submitted_data, rules_values)
-
+  out <- validate::confront(
+    submitted_data,
+    rules_values,
+    ref = list(domain_codes = domain_codes)
+  )
+  
   # Generate validation report
   report <- validate::summary(out)
-
-  # Determine acceptance/rejection
-  if (all(validate::values(out))) { # Example: All rules passed
-    result <- list(status = "Accepted", report = report)
-  } else {
-    result <- list(status = "Rejected", report = report)
-  }
-
-  # display message if accepted vs rejected
-  if (result$status == "Accepted") {
-    result <- list(status = "Accepted", message = "ATTAINS.OrganizationIdentifier(s) passed all validation checks.")
-  } else {
-    result <- list(status = "Rejected", message = "ATTAINS.OrganizationIdentifier(s) failed some validation checks. Please review the issues.")
-  }
-
-  # add values to list
-  result$issues <- unique(
-    data[which(
-      !toupper(data[,"ATTAINS.OrganizationIdentifier"]) %in% 
-        toupper(
-          spsUtil::quiet(
-            rExpertQuery::EQ_DomainValues("org_id")[, "code"])
-        )
-    ), "ATTAINS.OrganizationIdentifier"]
+  
+  # Compute pass/fail/NA counts from report
+  in_domain <- toupper(submitted_data[["ATTAINS.OrganizationIdentifier"]]) %in% domain_codes
+  nrows_passes <- report$passes
+  nrows_fails  <- report$fails
+  nrows_na     <- report$nNA
+  
+  # Determine acceptance
+  vals <- validate::values(out)
+  has_rule_error <- any(isTRUE(report$error))
+  accepted <- (nrows_fails == 0L) && !has_rule_error && isTRUE(all(vals))
+  
+  status <- if (accepted) "Accepted" else "Rejected"
+  
+  # Identify problematic entries (excluding NA)
+  issues <- unique(stats::na.omit(submitted_data$ATTAINS.OrganizationIdentifier[!in_domain]))
+  
+  # Build result
+  list(
+    status = status,
+    message = if (accepted) {
+      "ATTAINS.OrganizationIdentifier(s) passed all validation checks."
+    } else {
+      "ATTAINS.OrganizationIdentifier(s) failed some validation checks. Please review the issues."
+    },
+    report = report,
+    issues = issues,
+    nrows_fails = nrows_fails,
+    nrows_passes = nrows_passes,
+    nrows_na = nrows_na
   )
-  result$nrows_fails <- report$fails
-  result$nrows_passes <- report$passes
-
-  return(result)
 }
-
 
 #' Load User Data - Validate TADA Magnitude Units
 #'
@@ -259,73 +381,90 @@ validateATTAINSOrg <- function(data) {
 #' data("UTAHDWQ")
 #' validateWQXUnits(UTAHDWQ)
 #'
+# Validate WQX Measure Units for Magnitude (final format; NA not allowed)
 validateWQXUnits <- function(data) {
   # Load or read data if a file path is provided
   if (is.character(data)) {
-    # Example: Read CSV
-    submitted_data <- utils::read.csv(data)
+    submitted_data <- utils::read.csv(data, stringsAsFactors = FALSE)
   } else if (is.data.frame(data)) {
     submitted_data <- data
   } else {
     stop("Input 'data' must be a data frame or a file path.")
   }
   
-  # allowable values for this column. NAs are not allowed here 
-  domain <- toupper(
-    utils::read.csv(url(
-      "https://cdx.epa.gov/wqx/download/DomainValues/MeasureUnit.CSV"
-    ))[,"Target.Unit"])
+  # Ensure required column exists
+  if (!"MagnitudeUnit" %in% names(submitted_data)) {
+    stop("Required column 'MagnitudeUnit' is missing from the input.")
+  }
   
-  # compare criteria df col to the allowable values defined
+  # Normalize type
+  submitted_data$MagnitudeUnit <- as.character(submitted_data$MagnitudeUnit)
+  
+  # Get domain values
+  domain_df <- tryCatch(
+    utils::read.csv(
+      url("https://cdx.epa.gov/wqx/download/DomainValues/MeasureUnit.CSV"),
+      stringsAsFactors = FALSE
+    ),
+    error = function(e) stop("Could not retrieve WQX MeasureUnit domain values: ", conditionMessage(e))
+  )
+  
+  if (!"Code" %in% names(domain_df)) {
+    stop("WQX MeasureUnit domain file does not contain column 'Code'.")
+  }
+  
+  domain_codes <- unique(toupper(as.character(domain_df[["Code"]])))
+  domain_codes <- domain_codes[!is.na(domain_codes) & nzchar(domain_codes)]
+  if (length(domain_codes) == 0L) {
+    stop("Retrieved WQX MeasureUnit domain values are empty; cannot validate.")
+  }
+  
+  # Build validation rule (NA not allowed)
   rules_values <- validate::validator(
-    toupper(MagnitudeUnit) %in% 
-      # read raw csv from url
-      toupper(
-        utils::read.csv(url(
-        "https://cdx.epa.gov/wqx/download/DomainValues/MeasureUnit.CSV"
-      ))[,"Target.Unit"]
-      )
+    !is.na(MagnitudeUnit) & toupper(MagnitudeUnit) %in% domain_codes
   )
   
   # Confront data with rules
-  out <- validate::confront(submitted_data, rules_values)
+  out <- validate::confront(
+    submitted_data,
+    rules_values,
+    ref = list(domain_codes = domain_codes)
+  )
   
   # Generate validation report
   report <- validate::summary(out)
   
-  # Determine acceptance/rejection
-  if (all(validate::values(out))) { # Example: All rules passed
-    result <- list(status = "Accepted", report = report)
-  } else {
-    result <- list(status = "Rejected", report = report)
-  }
+  # Compute pass/fail/NA counts from report
+  in_domain <- !is.na(submitted_data[["MagnitudeUnit"]]) &
+    (toupper(submitted_data[["MagnitudeUnit"]]) %in% domain_codes)
+  nrows_passes <- report$passes
+  nrows_fails  <- report$fails
+  nrows_na     <- report$nNA
   
-  # display message if accepted vs rejected
-  if (result$status == "Accepted") {
-    result <- list(status = "Accepted", message = "MagnitudeUnit(s) passed all validation checks.")
-  } else {
-    result <- list(status = "Rejected", message = "MagnitudeUnit(s) failed some validation checks. Please review the issues.")
-  }
+  # Determine acceptance
+  vals <- validate::values(out)
+  has_rule_error <- any(isTRUE(report$error))
+  accepted <- (nrows_fails == 0L) && !has_rule_error && isTRUE(all(vals))
   
-  # add values to list
-  result$issues <- data |>
-    dplyr::filter(!toupper(MagnitudeUnit) %in% toupper(domain)) |>
-    dplyr::select(TADA.CharacteristicName, MagnitudeUnit) |>
-    dplyr::distinct()
-    
-  #   unique(
-  #   data[which(
-  #     !toupper(data[,"MagnitudeUnit"]) %in% 
-  #       toupper(
-  #         utils::read.csv(url(
-  #           "https://cdx.epa.gov/wqx/download/DomainValues/MeasureUnit.CSV"
-  #         ))[,"Target.Unit"])
-  #   ), "MagnitudeUnit"]
-  # )
-  result$nrows_fails <- report$fails
-  result$nrows_passes <- report$passes
+  status <- if (accepted) "Accepted" else "Rejected"
   
-  return(result)
+  # Identify problematic entries (excluding NA)
+  issues <- unique(stats::na.omit(submitted_data$MagnitudeUnit[!in_domain]))
+  
+  # Build result
+  list(
+    status = status,
+    message = if (accepted) {
+      "MagnitudeUnit(s) passed all validation checks."
+    } else {
+      "MagnitudeUnit(s) failed some validation checks. Please review the issues."
+    },
+    report = report,
+    issues = issues,
+    nrows_fails = nrows_fails,
+    nrows_passes = nrows_passes,
+    nrows_na = nrows_na
+  )
 }
 
 
@@ -342,71 +481,77 @@ validateWQXUnits <- function(data) {
 #' data("UTAHDWQ")
 #' validateDurationUnits(UTAHDWQ)
 #'
+# Validate Duration Units (final format; NA allowed as pass)
 validateDurationUnits <- function(data) {
   # Load or read data if a file path is provided
   if (is.character(data)) {
-    # Example: Read CSV
-    submitted_data <- utils::read.csv(data)
+    submitted_data <- utils::read.csv(data, stringsAsFactors = FALSE)
   } else if (is.data.frame(data)) {
     submitted_data <- data
   } else {
     stop("Input 'data' must be a data frame or a file path.")
   }
   
-  domain <-
-    c(
-      "n-hour",
-      "n-day",
-      "n-week",
-      "n-month",
-      "n-quarter"
-    )
+  # Ensure required column exists
+  if (!"DurationUnit" %in% names(submitted_data)) {
+    stop("Required column 'DurationUnit' is missing from the input.")
+  }
   
-  # compare df with allowable values
+  # Normalize type
+  submitted_data$DurationUnit <- as.character(submitted_data$DurationUnit)
+  
+  # Allowed values
+  domain <- c("n-hour", "n-day", "n-week", "n-month", "n-quarter")
+  domain_codes <- toupper(domain)
+  
+  # Build validation rule (NA allowed)
   rules_values <- validate::validator(
-    # duration unit does not need to be filled, allow NA as pass
-    !is.na(toupper(DurationUnit)) %in% toupper(c(
-      "n-hour",
-      "n-day",
-      "n-week",
-      "n-month",
-      "n-quarter"
-    ))
+    is.na(DurationUnit) | toupper(DurationUnit) %in% domain_codes
   )
   
   # Confront data with rules
-  out <- validate::confront(submitted_data, rules_values)
+  out <- validate::confront(
+    submitted_data,
+    rules_values,
+    ref = list(domain_codes = domain_codes)
+  )
   
   # Generate validation report
   report <- validate::summary(out)
   
-  # Determine acceptance/rejection
-  if (all(validate::values(out))) { # Example: All rules passed
-    result <- list(status = "Accepted", report = report)
-  } else {
-    result <- list(status = "Rejected", report = report)
-  }
+  # Compute pass/fail/NA counts from report
+  in_domain <- is.na(submitted_data[["DurationUnit"]]) |
+    (toupper(submitted_data[["DurationUnit"]]) %in% domain_codes)
+  nrows_passes <- report$passes
+  nrows_fails  <- report$fails
+  nrows_na     <- report$nNA
   
-  # display message if accepted vs rejected
-  if (result$status == "Accepted") {
-    result <- list(status = "Accepted", message = "DurationUnit(s) passed all validation checks.")
-  } else {
-    result <- list(status = "Rejected", message = "DurationUnit(s) failed some validation checks. Please review the issues.")
-  }
+  # Determine acceptance
+  vals <- validate::values(out)
+  has_rule_error <- any(isTRUE(report$error))
+  accepted <- (nrows_fails == 0L) && !has_rule_error && isTRUE(all(vals))
   
-  # add values to list
-  result$issues <- data |>
-    dplyr::filter(!toupper(DurationUnit) %in% toupper(domain)) |>
-    dplyr::select(DurationUnit) |>
-    dplyr::distinct()
-    
-  result$nrows_fails <- report$fails
-  result$nrows_passes <- report$passes
+  status <- if (accepted) "Accepted" else "Rejected"
   
-  rm(domain, out, report)
+  # Identify problematic entries (excluding NA)
+  issues <- unique(stats::na.omit(submitted_data$DurationUnit[!in_domain]))
   
-  return(result)
+  # Build result
+  list(
+    status = status,
+    message = if (accepted) {
+      "DurationUnit(s) passed all validation checks."
+    } else {
+      "DurationUnit(s) failed some validation checks. Please review the issues."
+    },
+    report = report,
+    issues = issues,
+    nrows_fails = nrows_fails,
+    nrows_passes = nrows_passes,
+    nrows_na = nrows_na
+  )
 }
+
 
 
 
@@ -422,73 +567,83 @@ validateDurationUnits <- function(data) {
 #' data("UTAHDWQ")
 #' validateFreqMethod(UTAHDWQ)
 #'
+# Validate Frequency Methods (final format; NA allowed as pass)
 validateFreqMethod <- function(data) {
   # Load or read data if a file path is provided
   if (is.character(data)) {
-    # Example: Read CSV
-    submitted_data <- utils::read.csv(data)
+    submitted_data <- utils::read.csv(data, stringsAsFactors = FALSE)
   } else if (is.data.frame(data)) {
     submitted_data <- data
   } else {
     stop("Input 'data' must be a data frame or a file path.")
   }
   
-  domain <-
-    c(
-      "Percent of samples not meeting",
-      "percentile",
-      "n-samples in 3 years",
-      "n-samples in 4 years",
-      "n-samples in 5 years",
-      "binomial test",
-      "NumberNotMeeting"
-    )
+  # Ensure required column exists
+  if (!"FreqMethod" %in% names(submitted_data)) {
+    stop("Required column 'FreqMethod' is missing from the input.")
+  }
   
+  # Normalize type
+  submitted_data$FreqMethod <- as.character(submitted_data$FreqMethod)
+  
+  # Allowed values
+  domain <- c(
+    "Percent of samples not meeting",
+    "percentile",
+    "n-samples in 3 years",
+    "n-samples in 4 years",
+    "n-samples in 5 years",
+    "binomial test",
+    "NumberNotMeeting"
+  )
+  domain_codes <- toupper(domain)
+  
+  # Build validation rule (NA allowed)
   rules_values <- validate::validator(
-    # freq method does not need to be filled, allow NA as pass
-    !is.na(toupper(FreqMethod)) %in% toupper(c(
-      "Percent of samples not meeting",
-      "percentile",
-      "n-samples in 3 years",
-      "n-samples in 4 years",
-      "n-samples in 5 years",
-      "binomial test",
-      "NumberNotMeeting"
-    ))
+    is.na(FreqMethod) | toupper(FreqMethod) %in% domain_codes
   )
   
   # Confront data with rules
-  out <- validate::confront(submitted_data, rules_values)
+  out <- validate::confront(
+    submitted_data,
+    rules_values,
+    ref = list(domain_codes = domain_codes)
+  )
   
   # Generate validation report
   report <- validate::summary(out)
   
-  # Determine acceptance/rejection
-  if (all(validate::values(out))) { # Example: All rules passed
-    result <- list(status = "Accepted", report = report)
-  } else {
-    result <- list(status = "Rejected", report = report)
-  }
+  # Compute pass/fail/NA counts from report
+  in_domain <- is.na(submitted_data[["FreqMethod"]]) |
+    (toupper(submitted_data[["FreqMethod"]]) %in% domain_codes)
+  nrows_passes <- report$passes
+  nrows_fails  <- report$fails
+  nrows_na     <- report$nNA
   
-  # display message if accepted vs rejected
-  if (result$status == "Accepted") {
-    result <- list(status = "Accepted", message = "FreqMethod(s) passed all validation checks.")
-  } else {
-    result <- list(status = "Rejected", message = "FreqMethod(s) failed some validation checks. Please review the issues.")
-  }
+  # Determine acceptance
+  vals <- validate::values(out)
+  has_rule_error <- any(isTRUE(report$error))
+  accepted <- (nrows_fails == 0L) && !has_rule_error && isTRUE(all(vals))
   
-  # add values to list
-  result$issues <- data |>
-    dplyr::filter(!toupper(FreqMethod) %in% toupper(domain)) |>
-    dplyr::select(FreqMethod) |>
-    dplyr::distinct()
+  status <- if (accepted) "Accepted" else "Rejected"
   
-  result$nrows_fails <- report$fails
-  result$nrows_passes <- report$passes
+  # Identify problematic entries (excluding NA)
+  issues <- unique(stats::na.omit(submitted_data$FreqMethod[!in_domain]))
   
-  rm(domain, out, report)
-  
-  return(result)
+  # Build result
+  list(
+    status = status,
+    message = if (accepted) {
+      "FreqMethod(s) passed all validation checks."
+    } else {
+      "FreqMethod(s) failed some validation checks. Please review the issues."
+    },
+    report = report,
+    issues = issues,
+    nrows_fails = nrows_fails,
+    nrows_passes = nrows_passes,
+    nrows_na = nrows_na
+  )
 }
 
 
@@ -504,80 +659,86 @@ validateFreqMethod <- function(data) {
 #' @examples
 #' validateDurationMethod(UTAHDWQ)
 #'
+# Validate Duration Methods (final format; NA allowed as pass)
 validateDurationMethod <- function(data) {
   # Load or read data if a file path is provided
   if (is.character(data)) {
-    # Example: Read CSV
-    submitted_data <- utils::read.csv(data)
+    submitted_data <- utils::read.csv(data, stringsAsFactors = FALSE)
   } else if (is.data.frame(data)) {
     submitted_data <- data
   } else {
     stop("Input 'data' must be a data frame or a file path.")
   }
   
-  domain <-
-    c(
-      "arithmetic mean",
-      "arithmetic median",
-      "arithmetic max",
-      "arithmetic min",
-      "arithmetic extremes",
-      "geometric mean",
-      "rolling geometric mean",
-      "rolling arithmetic mean",
-      "mean of daily minima", # added 1/21/26 common only for DO it seems.
-      "mean of daily maxima" # added 1/21/26 common only for DO it seems.
-    )
+  # Ensure required column exists
+  if (!"DurationMethod" %in% names(submitted_data)) {
+    stop("Required column 'DurationMethod' is missing from the input.")
+  }
   
+  # Normalize type
+  submitted_data$DurationMethod <- as.character(submitted_data$DurationMethod)
+  
+  # Allowed values
+  domain <- c(
+    "arithmetic mean",
+    "arithmetic median",
+    "arithmetic max",
+    "arithmetic min",
+    "arithmetic extremes",
+    "geometric mean",
+    "rolling geometric mean",
+    "rolling arithmetic mean",
+    "mean of daily minima",
+    "mean of daily maxima"
+  )
+  domain_codes <- toupper(domain)
+  
+  # Build validation rule (NA allowed)
   rules_values <- validate::validator(
-    # duration method does not need to be filled, allow NA as pass
-    !is.na(toupper(DurationMethod)) %in% toupper(c(
-      "arithmetic mean",
-      "arithmetic median",
-      "arithmetic max",
-      "arithmetic min",
-      "arithmetic extremes",
-      "geometric mean",
-      "rolling geometric mean",
-      "rolling arithmetic mean",
-      "mean of daily minima", # added 1/21/26 common only for DO it seems.
-      "mean of daily maxima" # added 1/21/26 common only for DO it seems.
-    )
-    )
+    is.na(DurationMethod) | toupper(DurationMethod) %in% domain_codes
   )
   
   # Confront data with rules
-  out <- validate::confront(submitted_data, rules_values)
+  out <- validate::confront(
+    submitted_data,
+    rules_values,
+    ref = list(domain_codes = domain_codes)
+  )
   
   # Generate validation report
   report <- validate::summary(out)
   
-  # Determine acceptance/rejection
-  if (all(validate::values(out))) { # Example: All rules passed
-    result <- list(status = "Accepted", report = report)
-  } else {
-    result <- list(status = "Rejected", report = report)
-  }
+  # Compute pass/fail/NA counts from report
+  in_domain <- is.na(submitted_data[["DurationMethod"]]) |
+    (toupper(submitted_data[["DurationMethod"]]) %in% domain_codes)
+  nrows_passes <- report$passes
+  nrows_fails  <- report$fails
+  nrows_na     <- report$nNA
   
-  # display message if accepted vs rejected
-  if (result$status == "Accepted") {
-    result <- list(status = "Accepted", message = "DurationMethod(s) passed all validation checks.")
-  } else {
-    result <- list(status = "Rejected", message = "DurationMethod(s) failed some validation checks. Please review the issues.")
-  }
+  # Determine acceptance
+  vals <- validate::values(out)
+  has_rule_error <- any(isTRUE(report$error))
+  accepted <- (nrows_fails == 0L) && !has_rule_error && isTRUE(all(vals))
   
-  # add values to list
-  result$issues <- data |>
-    dplyr::filter(!DurationMethod %in% domain) |>
-    dplyr::select(DurationMethod) |>
-    dplyr::distinct()
+  status <- if (accepted) "Accepted" else "Rejected"
   
-  result$nrows_fails <- report$fails
-  result$nrows_passes <- report$passes
+  # Identify problematic entries (excluding NA)
+  issues <- unique(stats::na.omit(submitted_data$DurationMethod[!in_domain]))
   
-  rm(domain, out, report)
-  
-  return(result)
+  # Build result
+  list(
+    status = status,
+    message = if (accepted) {
+      "DurationMethod(s) passed all validation checks."
+    } else {
+      "DurationMethod(s) failed some validation checks. Please review the issues."
+    },
+    report = report,
+    issues = issues,
+    nrows_fails = nrows_fails,
+    nrows_passes = nrows_passes,
+    nrows_na = nrows_na
+  )
 }
 
 
@@ -593,70 +754,219 @@ validateDurationMethod <- function(data) {
 #' @examples
 #' validateSeason(UTAHDWQ)
 #'
+# Validate Season (final format; NA allowed as pass)
 validateSeason <- function(data) {
   # Load or read data if a file path is provided
   if (is.character(data)) {
-    # Example: Read CSV
-    submitted_data <- utils::read.csv(data)
+    submitted_data <- utils::read.csv(data, stringsAsFactors = FALSE)
   } else if (is.data.frame(data)) {
     submitted_data <- data
   } else {
     stop("Input 'data' must be a data frame or a file path.")
   }
   
-  domain <-
-    c(
-      "Summer",
-      "Fall",
-      "Spring",
-      "Winter"
-    )
+  # Ensure required column exists
+  if (!"Season" %in% names(submitted_data)) {
+    stop("Required column 'Season' is missing from the input.")
+  }
   
+  # Normalize type
+  submitted_data$Season <- as.character(submitted_data$Season)
+  
+  # Allowed values
+  domain <- c("Summer", "Fall", "Spring", "Winter")
+  domain_codes <- toupper(domain)
+  
+  # Build validation rule (NA allowed)
   rules_values <- validate::validator(
-    # duration unit does not need to be filled, allow NA as pass
-    is.na(toupper(Season)) %in% toupper(c(
-      "Summer",
-      "Fall",
-      "Spring",
-      "Winter"
-    )
-    )
+    is.na(Season) | toupper(Season) %in% domain_codes
   )
   
   # Confront data with rules
-  out <- validate::confront(submitted_data, rules_values)
+  out <- validate::confront(
+    submitted_data,
+    rules_values,
+    ref = list(domain_codes = domain_codes)
+  )
   
   # Generate validation report
   report <- validate::summary(out)
   
-  # Determine acceptance/rejection
-  if (all(validate::values(out), na.rm = TRUE)) { # Example: All rules passed
-    result <- list(status = "Accepted", report = report)
-  } else {
-    result <- list(status = "Rejected", report = report)
-  }
+  # Compute pass/fail/NA counts from report
+  in_domain <- is.na(submitted_data[["Season"]]) |
+    (toupper(submitted_data[["Season"]]) %in% domain_codes)
+  nrows_passes <- report$passes
+  nrows_fails  <- report$fails
+  nrows_na     <- report$nNA
   
-  # display message if accepted vs rejected
-  if (result$status == "Accepted") {
-    result <- list(status = "Accepted", message = "Season(s) passed all validation checks.")
-  } else {
-    result <- list(status = "Rejected", message = "Season(s) failed some validation checks. Please review the issues.")
-  }
+  # Determine acceptance
+  vals <- validate::values(out)
+  has_rule_error <- any(isTRUE(report$error))
+  accepted <- (nrows_fails == 0L) && !has_rule_error && isTRUE(all(vals))
   
-  # add values to list
-  result$issues <- data |>
-    dplyr::filter(!Season %in% domain) |>
-    dplyr::select(Season) |>
-    dplyr::distinct()
+  status <- if (accepted) "Accepted" else "Rejected"
   
-  result$nrows_fails <- report$fails
-  result$nrows_passes <- report$passes
+  # Identify problematic entries (excluding NA)
+  issues <- unique(stats::na.omit(submitted_data$Season[!in_domain]))
   
-  #rm(domain, out, report)
-  
-  return(result)
+  # Build result
+  list(
+    status = status,
+    message = if (accepted) {
+      "Season(s) passed all validation checks."
+    } else {
+      "Season(s) failed some validation checks. Please review the issues."
+    },
+    report = report,
+    issues = issues,
+    nrows_fails = nrows_fails,
+    nrows_passes = nrows_passes,
+    nrows_na = nrows_na
+  )
 }
 
+#' Runs All Validation Functions for a filled out criteria table
+#'
+#' Runs all validation functions by default. Users can choose to select
+#' which validation functions to run with the validators argument input.
+#' @param data a R data frame with a TADA-compatible criteria table filled out.
+#' 
+#' @param validators a character list consisting of the TADACommunityHub
+#' validation functions to run. Default is null which will run all validation
+#' functions.
+#' 
+#' @return A list returning if all seasons are current valid
+#' domain values or not. If not, identify which are not valid.
+#' @export
+#'
+#' @examples
+#' runAllValidations(UTAHDWQ)
+#'
+# Run all TADA/ATTAINS/WQX validation functions on a single dataset
+runAllValidations <- function(
+    data,
+    validators = NULL
+) {
+  # Default set of validator functions (named for clarity in the output)
+  if (is.null(validators)) {
+    validators <- list(
+      ATTAINS.ParameterName = validateATTAINSParam,
+      TADA.CharacteristicName = validateWQXChar,
+      ATTAINS.UseName = validateATTAINSUse,
+      ATTAINS.OrganizationIdentifier = validateATTAINSOrg,
+      MagnitudeUnits = validateWQXUnits,
+      DurationUnits = validateDurationUnits,
+      FreqMethod = validateFreqMethod,
+      DurationMethod = validateDurationMethod,
+      Season = validateSeason
+    )
+  }
+  
+  # Safety wrapper to handle errors per validator
+  safe_call <- function(fun, data) {
+    tryCatch(
+      fun(data),
+      error = function(e) {
+        list(
+          status = "Error",
+          message = paste0("Validation failed: ", conditionMessage(e)),
+          report = NULL,
+          issues = NULL,
+          nrows_fails = NA_integer_,
+          nrows_passes = NA_integer_,
+          nrows_na = NA_integer_
+        )
+      }
+    )
+  }
+  
+  # Run each validator and collect results
+  results <- lapply(validators, safe_call, data = data)
+  
+  # Create a compact summary data frame
+  summary <- data.frame(
+    validator    = names(results),
+    status       = vapply(results, function(x) if (!is.null(x$status)) x$status else NA_character_, character(1)),
+    nrows_passes = vapply(results, function(x) if (!is.null(x$nrows_passes)) x$nrows_passes else NA_integer_, integer(1)),
+    nrows_fails  = vapply(results, function(x) if (!is.null(x$nrows_fails))  x$nrows_fails  else NA_integer_, integer(1)),
+    nrows_na     = vapply(results, function(x) if (!is.null(x$nrows_na))     x$nrows_na     else NA_integer_, integer(1)),
+    issues_count = vapply(results, function(x) {
+      if (is.null(x$issues)) NA_integer_ else length(unique(x$issues))
+    }, integer(1)),
+    stringsAsFactors = FALSE
+  )
+  
+  # Determine overall status: Accepted only if all are Accepted and none are Rejected/Error
+  overall_status <- if (
+    all(summary$status == "Accepted", na.rm = TRUE) &&
+    !any(summary$status %in% c("Rejected", "Error"), na.rm = TRUE)
+  ) "Accepted" else "Rejected"
+  
+  # Build a user-readable message and return it instead of printing
+  rejected_idx <- which(summary$status == "Rejected")
+  error_idx    <- which(summary$status == "Error")
+  
+  # How many invalid values to show per validator (configurable via option)
+  limit <- getOption("TADA.print_issues_limit", 10L)
+  
+  lines <- character(0)
+  
+  # Add rejected validators with their invalid values
+  if (length(rejected_idx) > 0L) {
+    for (i in rejected_idx) {
+      vname <- summary$validator[i]
+      iss   <- results[[i]]$issues
+      if (is.null(iss)) {
+        lines <- c(lines, sprintf("- %s: invalid values present (details unavailable).", vname))
+      } else {
+        iss <- unique(stats::na.omit(iss))
+        n   <- length(iss)
+        if (n == 0L) {
+          lines <- c(lines, sprintf("- %s: invalid values present (0 reported after NA removal).", vname))
+        } else {
+          shown <- iss[seq_len(min(n, limit))]
+          # Quote values for clarity
+          shown_fmt <- paste(sprintf("'%s'", shown), collapse = ", ")
+          if (n > limit) {
+            lines <- c(lines, sprintf("- %s: %d invalid value(s): %s ... (+%d more)", vname, n, shown_fmt, n - limit))
+          } else {
+            lines <- c(lines, sprintf("- %s: %d invalid value(s): %s", vname, n, shown_fmt))
+          }
+        }
+      }
+    }
+  }
+  
+  # Add error validators with their messages
+  if (length(error_idx) > 0L) {
+    for (i in error_idx) {
+      vname <- summary$validator[i]
+      msg   <- results[[i]]$message
+      if (is.null(msg)) msg <- "Unknown error."
+      lines <- c(lines, sprintf("- %s: ERROR - %s", vname, msg))
+    }
+  }
+  
+  overall_message <- if (length(lines) > 0L) {
+    paste0(
+      "Overall Status ", overall_status, 
+      ": Invalid entries were found in your criteria table.\n\nDetails:\n",
+      paste(lines, collapse = "\n")
+    )
+  } else {
+    paste0(
+      "Overall Status ", overall_status, 
+      ": All values entered into your criteria table are valid! "
+    )
+  }
+  
+  # Return a structured list (now includes overall_message)
+  return(list(
+    overall_status = overall_message,
+    summary = summary,
+    results = results
+  ))
+}
 
 
 #' Validate all data .xlsx in a Folder Path
@@ -676,9 +986,9 @@ validateSeason <- function(data) {
 #' @export
 #'
 #' @examples
-#' review <- validateAll(validateColumn = validateWQXChar)
+#' review <- validateAllFiles(validateColumn = validateWQXChar)
 #'
-validateAll <- function(folder_path = NULL, validateColumn) {
+validateAllFiles <- function(folder_path = NULL, validateColumn) {
   if (is.null(folder_path)) {
     print("No folder path specified, searching through all files currently found in inst/extdata/")
     folder_path <- system.file("extdata", package = "TADACommunityHub")
@@ -709,168 +1019,4 @@ validateAll <- function(folder_path = NULL, validateColumn) {
   # 
   # print(df_counts)
   return(val_checks)
-}
-
-
-
-#' Export data with errors from validateAll
-#'
-#' Loads the list of unique errors in a column and exports it to df
-#' @param data a list of list of multiple data frame that is an output from
-#' the TADACommunityHub R validateAll function.
-#'
-#' @param folder_path The default is "inst/extdata/" to review user submitted criteria
-#' table to the TADACommunityHub repository for review.
-#'
-#' @param excel A boolean value. If TRUE, this will generate an excel spreadsheet
-#' of all criteria tables in your defined folder to indicate what values not
-#' a valid entry in TADA format.
-#'
-#' @return An excel spreadsheet that shows the invalid column values from the
-#' user supplied criteria table(s). Users can choose from a drop down list of
-#' allowable valid values for that column name.
-#'
-#' @export
-#'
-#' @examples
-#' review2 <- validateAll(validateColumn = validateATTAINSUse)
-#' err <- exportErrors(review2)
-#'
-exportErrors <- function(data, folder_path = NULL, excel = FALSE) {
-  # Create an empty list to store the dataframes
-  list_of_dataframes <- list()
-
-  # Consider flexibility in folder path in future.
-  if (is.null(folder_path)) {
-    print("No folder path specified, searching through all files currently found in inst/extdata/")
-    folder_path <- system.file("extdata", package = "TADACommunityHub")
-  }
-  file_list <- list.files(path = folder_path, pattern = "\\.xlsx$", full.names = TRUE)
-
-  # Loop through each XLSX file and read it into a dataframe, then add to the list
-  for (file_path in file_list) {
-    # Extract the file name without extension to use as a list element name
-    file_name <- tools::file_path_sans_ext(basename(file_path))
-
-    # Read the Excel file into a dataframe
-    df <- readxl::read_excel(file_path)
-
-    # Add the dataframe to the list, using the file name as the element name
-    list_of_dataframes[[file_name]] <- df
-  }
-
-  errors <- purrr::map(data, ~ .x$issues)
-
-  errors_col <- names(errors[[1]])
-
-  # Filter list of df by errors_col
-  list_of_dataframes <- purrr::map(list_of_dataframes, ~ {
-    if (errors_col %in% colnames(.x)) {
-      unique(.x[, errors_col])
-    } else {
-      .x[, errors_col] <- NA
-    }
-    # return(.x)
-  })
-
-  # Subset each data frame
-  result_list <- errors
-
-  if (excel == TRUE) {
-    # 1) openxlsx tab max length is 31 char
-    n <- nchar(folder_path) - 11
-    names(result_list) <- substr(names(err), 35, nchar(names(err)))
-    names(result_list) <- substr(names(result_list), 1, 30)
-
-    downloads_path <- file.path(Sys.getenv("USERPROFILE"), "Downloads")
-
-    file_name <- "my_exported_data.xlsx"
-
-    full_path <- file.path(downloads_path, file_name)
-
-    openxlsx::write.xlsx(result_list, file = full_path)
-
-    # 2. Open the target workbook
-    wb <- openxlsx::loadWorkbook(full_path)
-
-    # 3. Get the names of all sheets in the workbook
-    sheet_names <- names(wb)
-
-    # 4. Get ATTAINS Parameter domain
-    if (errors_col == "ATTAINS.ParameterName") {
-      list_values <- as.character(rExpertQuery::EQ_DomainValues(domain = "param_name")[, "code"])
-      openxlsx::addWorksheet(wb, "Index", visible = TRUE)
-      openxlsx::writeData(
-        wb,
-        "Index",
-        startCol = 1,
-        x = list_values
-      )
-    }
-
-    if (errors_col == "ATTAINS.UseName") {
-      list_values <- as.character(rExpertQuery::EQ_DomainValues(domain = "use_name")[, "code"])
-      openxlsx::addWorksheet(wb, "Index", visible = TRUE)
-      openxlsx::writeData(
-        wb,
-        "Index",
-        startCol = 1,
-        x = list_values
-      )
-    }
-
-    n_sheets <- length(wb$worksheets) - 1
-    # m <- ifelse(nrow(result_list[[i]]) == 0, 1, nrow(result_list[[i]]) + 1)
-
-    for (i in 1:n_sheets) {
-      if (errors_col == "ATTAINS.ParameterName") {
-        openxlsx::writeData(
-          wb,
-          sheet = sheet_names[i],
-          startCol = 2,
-          x = "Suggested.ATTAINS.ParameterName"
-        )
-      }
-      if (errors_col == "ATTAINS.UseName") {
-        openxlsx::writeData(
-          wb,
-          sheet = sheet_names[i],
-          startCol = 2,
-          x = "Suggested.ATTAINS.UseName"
-        )
-      }
-
-      # openxlsx::conditionalFormatting(
-      #   wb,
-      #   sheet = sheet_names[i],
-      #   cols = 2,
-      #   rows = 1:50,
-      #   type = "blanks",
-      #   style = openxlsx::createStyle(bgFill = "red")
-      # )
-
-      openxlsx::conditionalFormatting(
-        wb,
-        sheet = sheet_names[i],
-        cols = 2,
-        rows = 1:50,
-        type = "notBlanks",
-        style = openxlsx::createStyle(bgFill = "green")
-      )
-
-      # Apply data validation to the second column (col = 2) for a range of rows
-      # For example, rows 2 to 100
-      openxlsx::dataValidation(
-        wb,
-        sheet = sheet_names[i],
-        cols = 2,
-        rows = 2:1000, # Adjust the row range as needed
-        type = "list",
-        value = sprintf("'Index'!$A$2:$A$20000")
-      )
-    }
-
-    openxlsx::saveWorkbook(wb, full_path, overwrite = TRUE)
-  }
-  return(result_list)
 }
