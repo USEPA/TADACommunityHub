@@ -7,8 +7,9 @@ UTAHDWQ
 WQP
 WQX
 dev
-df
+env
 extdata
-validateAll
+rExpertQuery
+setEQKey
 validators
 xlsx
