@@ -34,7 +34,8 @@ validateATTAINSParam <- function(data) {
   domain_df <- tryCatch(
     {
       # Suppress messages from the web service call
-      spsUtil::quiet(rExpertQuery::EQ_DomainValues("param_name"))
+      spsUtil::quiet(rExpertQuery::EQ_DomainValues("param_name",
+                                                   api_key = .setEQKey()))
     },
     error = function(e) {
       stop("Could not retrieve domain values: ", conditionMessage(e))
