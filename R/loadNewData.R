@@ -34,7 +34,10 @@ validateATTAINSParam <- function(data) {
   domain_df <- tryCatch(
     {
       # Suppress messages from the web service call
-      spsUtil::quiet(rExpertQuery::EQ_DomainValues("param_name"))
+      spsUtil::quiet(rExpertQuery::EQ_DomainValues(
+        "param_name",
+        api_key = .setEQKey()
+      ))
     },
     error = function(e) {
       stop("Could not retrieve domain values: ", conditionMessage(e))
@@ -242,7 +245,10 @@ validateATTAINSUse <- function(data) {
 
   # Get domain values
   domain_df <- tryCatch(
-    spsUtil::quiet(rExpertQuery::EQ_DomainValues("use_name")),
+    spsUtil::quiet(rExpertQuery::EQ_DomainValues(
+      "use_name",
+      api_key = .setEQKey()
+    )),
     error = function(e) {
       stop(
         "Could not retrieve ATTAINS Use domain values: ",
@@ -334,7 +340,10 @@ validateATTAINSOrg <- function(data) {
 
   # Get domain values
   domain_df <- tryCatch(
-    spsUtil::quiet(rExpertQuery::EQ_DomainValues("org_id")),
+    spsUtil::quiet(rExpertQuery::EQ_DomainValues(
+      "org_id",
+      api_key = .setEQKey()
+    )),
     error = function(e) {
       stop(
         "Could not retrieve ATTAINS Organization domain values: ",
