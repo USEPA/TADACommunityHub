@@ -9,8 +9,10 @@ test_that("validateATTAINSParam identifies all non-valid ATTAINS parameter names
   res <- validateATTAINSParam(UTAHDWQ)
 
   # Retrieve the ATTAINS domain values for parameters
-  domain_df <- spsUtil::quiet(rExpertQuery::EQ_DomainValues("param_name",
-                                                            api_key = .setEQKey()))
+  domain_df <- spsUtil::quiet(rExpertQuery::EQ_DomainValues(
+    "param_name",
+    api_key = .setEQKey()
+  ))
   # Note: validateATTAINSParam uses 'name' column from EQ_DomainValues
   domain_vals <- toupper(as.character(domain_df$name))
 
@@ -31,8 +33,10 @@ test_that("validateATTAINSUse identifies all non-valid ATTAINS use names", {
   res <- validateATTAINSUse(UTAHDWQ)
 
   # Retrieve the ATTAINS domain values for uses (uses 'code')
-  domain_df <- spsUtil::quiet(rExpertQuery::EQ_DomainValues("use_name",
-                                                            api_key =.setEQKey()))
+  domain_df <- spsUtil::quiet(rExpertQuery::EQ_DomainValues(
+    "use_name",
+    api_key = .setEQKey()
+  ))
   domain_vals <- toupper(as.character(domain_df$code))
 
   expect_true(is.list(res))
@@ -51,8 +55,10 @@ test_that("validateATTAINSOrg identifies all non-valid ATTAINS organization iden
   res <- validateATTAINSOrg(UTAHDWQ)
 
   # Retrieve the ATTAINS domain values for org_id (uses 'code')
-  domain_df <- spsUtil::quiet(rExpertQuery::EQ_DomainValues("org_id",
-                                                            api_key = .setEQKey()))
+  domain_df <- spsUtil::quiet(rExpertQuery::EQ_DomainValues(
+    "org_id",
+    api_key = .setEQKey()
+  ))
   domain_vals <- toupper(as.character(domain_df$code))
 
   expect_true(is.list(res))

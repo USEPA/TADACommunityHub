@@ -24,13 +24,13 @@ utils::globalVariables(c(
   if (nzchar(opt)) {
     return(opt)
   }
-  
+
   # check to see if key is stored in system environment (primarily for use in checks)
   env <- Sys.getenv("EQ_API_KEY", unset = "")
   if (nzchar(env)) {
     return(env)
   }
-  
+
   # if neither exist
   def <- "lfzVzpwIlKS1O4l1QmbOLUeTzxyql4QdbHVR5Yf5"
   if (nzchar(def)) {
